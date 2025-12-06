@@ -7,36 +7,101 @@ import (
 )
 
 func main() {
-	// 测试用例
-	testCases := []string{
+	fmt.Println("=== mlang 语义分析器演示 ===\n")
+
+	// 创建一个自定义分析器来演示注册功能
+	analyzer := semantic.NewAnalyzer()
+
+	// 注册自定义函数
+	fmt.Println("注册自定义函数:")
+	analyzer.RegisterFunction("sqrt", []semantic.Type{semantic.NumberType}, semantic.NumberType)
+	analyzer.RegisterFunction("concat", []semantic.Type{semantic.StringType, semantic.StringType}, semantic.StringType)
+	analyzer.RegisterFunction("isEmpty", []semantic.Type{semantic.AnyType}, semantic.BooleanType)
+	
+	// 注册自定义比较运算符
+	analyzer.RegisterCompareOp("contains", semantic.StringType, semantic.StringType, semantic.BooleanType)
+	analyzer.RegisterCompareOp("startsWith", semantic.StringType, semantic.StringType, semantic.BooleanType)
+
+	// 列出所有注册的函数
+	functions := analyzer.ListFunctions()
+	for name, funcType := range functions {
+		fmt.Printf("  %s: %s\n", name, funcType.String())
+	}
+
+	fmt.Println("\n=== 基础测试用例 ===")
+	basicTestCases := []string{
 		"1 + 2",
-		"true && false", // 这应该报错，因为语法中没有 && 运算符
 		"[1, 2, 3]",
 		"[1, \"hello\"]", // 类型不一致，应该报错
 		"{\"name\": \"test\", \"age\": 25}",
-		"{1: \"one\", \"two\": 2}", // 键类型不一致，应该报错
 		"len([1, 2, 3])",
 		"max(1, 2)",
 		"max(1, \"2\")", // 参数类型错误
-		"unknown_func()", // 未定义函数
-		"1 > 2",
-		"\"hello\" + \"world\"", // 字符串不支持加法
 	}
 
+	runTestCases(basicTestCases, analyzer)
+
+	fmt.Println("\n=== 自定义函数测试 ===")
+	customFuncTestCases := []string{
+		"sqrt(16)",
+		"sqrt(\"invalid\")", // 类型错误
+		"concat(\"hello\", \" world\")",
+		"concat(1, 2)", // 类型错误
+		"isEmpty([1, 2, 3])",
+		"isEmpty(\"\")",
+	}
+
+	runTestCases(customFuncTestCases, analyzer)
+
+	fmt.Println("\n=== 自定义比较运算符测试 ===")
+	customCompareTestCases := []string{
+		"\"hello world\" contains \"world\"",
+		"\"test\" startsWith \"te\"",
+		"\"hello\" contains 123", // 类型错误
+		"42 startsWith \"4\"", // 类型错误
+	}
+
+	runTestCases(customCompareTestCases, analyzer)
+
+	fmt.Println("\n=== 函数管理演示 ===")
+	fmt.Println("删除 sqrt 函数:")
+	analyzer.UnregisterFunction("sqrt")
+	
+	errors, _ := semantic.AnalyzeCodeWithAnalyzer("sqrt(16)", analyzer)
+	if len(errors) > 0 {
+		fmt.Printf("  预期错误: %s\n", errors[0].Error())
+	}
+
+	fmt.Println("\n重新注册 sqrt 函数 (支持字符串参数):")
+	analyzer.RegisterFunction("sqrt", []semantic.Type{semantic.AnyType}, semantic.NumberType)
+	
+	errors, resultType := semantic.AnalyzeCodeWithAnalyzer("sqrt(\"16\")", analyzer)
+	if len(errors) == 0 {
+		fmt.Printf("  成功: 结果类型 %s\n", resultType.String())
+	}
+
+	fmt.Println("\n=== 最终函数列表 ===")
+	finalFunctions := analyzer.ListFunctions()
+	for name, funcType := range finalFunctions {
+		fmt.Printf("  %s: %s\n", name, funcType.String())
+	}
+}
+
+func runTestCases(testCases []string, analyzer *semantic.Analyzer) {
 	for i, testCase := range testCases {
-		fmt.Printf("\n=== Test Case %d: %s ===\n", i+1, testCase)
+		fmt.Printf("\nTest %d: %s\n", i+1, testCase)
 		
-		errors, resultType := semantic.AnalyzeCode(testCase)
+		errors, resultType := semantic.AnalyzeCodeWithAnalyzer(testCase, analyzer)
 		
 		if len(errors) > 0 {
-			fmt.Println("Semantic Errors:")
+			fmt.Println("  语义错误:")
 			for _, err := range errors {
-				fmt.Printf("  %s\n", err.Error())
+				fmt.Printf("    %s\n", err.Error())
 			}
 		} else {
-			fmt.Println("No semantic errors")
+			fmt.Println("  ✓ 无语义错误")
 		}
 		
-		fmt.Printf("Result type: %s\n", resultType.String())
+		fmt.Printf("  结果类型: %s\n", resultType.String())
 	}
 }

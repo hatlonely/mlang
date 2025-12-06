@@ -101,3 +101,37 @@ func (st *SymbolTable) Define(name string, symbolType Type) error {
 func (st *SymbolTable) Lookup(name string) (*Symbol, bool) {
 	return st.currentScope.Lookup(name)
 }
+
+// RegisterFunction 注册一个新函数
+func (st *SymbolTable) RegisterFunction(name string, paramTypes []Type, returnType Type) error {
+	funcType := &FunctionType{
+		ParamTypes: paramTypes,
+		ReturnType: returnType,
+	}
+	return st.globalScope.Define(name, funcType)
+}
+
+// RegisterCompareOp 注册一个比较运算符函数
+func (st *SymbolTable) RegisterCompareOp(name string, leftType, rightType, returnType Type) error {
+	funcType := &FunctionType{
+		ParamTypes: []Type{leftType, rightType},
+		ReturnType: returnType,
+	}
+	return st.globalScope.Define(name, funcType)
+}
+
+// UnregisterFunction 删除一个已注册的函数
+func (st *SymbolTable) UnregisterFunction(name string) {
+	delete(st.globalScope.symbols, name)
+}
+
+// ListFunctions 列出所有已注册的函数
+func (st *SymbolTable) ListFunctions() map[string]*FunctionType {
+	functions := make(map[string]*FunctionType)
+	for name, symbol := range st.globalScope.symbols {
+		if funcType, ok := symbol.Type.(*FunctionType); ok {
+			functions[name] = funcType
+		}
+	}
+	return functions
+}

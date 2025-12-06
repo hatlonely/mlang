@@ -49,6 +49,31 @@ func (a *Analyzer) HasErrors() bool {
 	return len(a.errors) > 0
 }
 
+// RegisterFunction 向分析器注册一个新函数
+func (a *Analyzer) RegisterFunction(name string, paramTypes []Type, returnType Type) error {
+	return a.symbolTable.RegisterFunction(name, paramTypes, returnType)
+}
+
+// RegisterCompareOp 向分析器注册一个比较运算符
+func (a *Analyzer) RegisterCompareOp(name string, leftType, rightType, returnType Type) error {
+	return a.symbolTable.RegisterCompareOp(name, leftType, rightType, returnType)
+}
+
+// UnregisterFunction 从分析器中删除一个函数
+func (a *Analyzer) UnregisterFunction(name string) {
+	a.symbolTable.UnregisterFunction(name)
+}
+
+// ListFunctions 列出所有已注册的函数
+func (a *Analyzer) ListFunctions() map[string]*FunctionType {
+	return a.symbolTable.ListFunctions()
+}
+
+// GetSymbolTable 获取符号表（用于高级操作）
+func (a *Analyzer) GetSymbolTable() *SymbolTable {
+	return a.symbolTable
+}
+
 // AnalyzeProgram analyzes the entire program
 func (a *Analyzer) AnalyzeProgram(ctx *parser.ProgContext) Type {
 	var lastType Type = VoidType
@@ -95,15 +120,15 @@ func (a *Analyzer) AnalyzeExpression(ctx parser.IExprContext) Type {
 	}
 }
 
-func (a *Analyzer) analyzeNumber(ctx *parser.NumberContext) Type {
+func (a *Analyzer) analyzeNumber(_ *parser.NumberContext) Type {
 	return NumberType
 }
 
-func (a *Analyzer) analyzeString(ctx *parser.StringContext) Type {
+func (a *Analyzer) analyzeString(_ *parser.StringContext) Type {
 	return StringType
 }
 
-func (a *Analyzer) analyzeBoolean(ctx *parser.BooleanContext) Type {
+func (a *Analyzer) analyzeBoolean(_ *parser.BooleanContext) Type {
 	return BooleanType
 }
 
@@ -290,6 +315,24 @@ func AnalyzeCode(input string) ([]*SemanticError, Type) {
 	
 	// Create analyzer and analyze
 	analyzer := NewAnalyzer()
+	resultType := analyzer.AnalyzeProgram(tree.(*parser.ProgContext))
+	
+	return analyzer.GetErrors(), resultType
+}
+
+// AnalyzeCodeWithAnalyzer 使用提供的分析器分析代码
+func AnalyzeCodeWithAnalyzer(input string, analyzer *Analyzer) ([]*SemanticError, Type) {
+	lexer := parser.NewmlangLexer(antlr.NewInputStream(input))
+	stream := antlr.NewCommonTokenStream(lexer, 0)
+	p := parser.NewmlangParser(stream)
+	
+	// Parse the input
+	tree := p.Prog()
+	
+	// Clear previous errors
+	analyzer.errors = make([]*SemanticError, 0)
+	
+	// Analyze with the provided analyzer
 	resultType := analyzer.AnalyzeProgram(tree.(*parser.ProgContext))
 	
 	return analyzer.GetErrors(), resultType
