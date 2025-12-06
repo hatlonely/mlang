@@ -6,6 +6,7 @@ import "fmt"
 type Type interface {
 	String() string
 	Equals(Type) bool
+	IsCompatibleWith(Type) bool
 }
 
 // BasicType represents primitive types
@@ -24,6 +25,15 @@ func (b *BasicType) Equals(other Type) bool {
 	return false
 }
 
+// IsCompatibleWith checks if this type is compatible with another type
+func (b *BasicType) IsCompatibleWith(other Type) bool {
+	// Check if other is a NumericType and this is a numeric type
+	if n, ok := other.(*NumericType); ok && n.Name == "numeric" {
+		return b.Name == "int" || b.Name == "float"
+	}
+	return b.Equals(other)
+}
+
 // ArrayType represents array types
 type ArrayType struct {
 	ElementType Type
@@ -38,6 +48,10 @@ func (a *ArrayType) Equals(other Type) bool {
 		return a.ElementType.Equals(o.ElementType)
 	}
 	return false
+}
+
+func (a *ArrayType) IsCompatibleWith(other Type) bool {
+	return a.Equals(other)
 }
 
 // DictType represents dictionary types
@@ -55,6 +69,10 @@ func (d *DictType) Equals(other Type) bool {
 		return d.KeyType.Equals(o.KeyType) && d.ValueType.Equals(o.ValueType)
 	}
 	return false
+}
+
+func (d *DictType) IsCompatibleWith(other Type) bool {
+	return d.Equals(other)
 }
 
 // FunctionType represents function types
@@ -104,9 +122,41 @@ func (f *FunctionType) Equals(other Type) bool {
 	return false
 }
 
+func (f *FunctionType) IsCompatibleWith(other Type) bool {
+	return f.Equals(other)
+}
+
+// NumericType represents the supertype for int and float
+type NumericType struct {
+	Name string
+}
+
+func (n *NumericType) String() string {
+	return n.Name
+}
+
+func (n *NumericType) Equals(other Type) bool {
+	if o, ok := other.(*NumericType); ok {
+		return n.Name == o.Name
+	}
+	return false
+}
+
+// IsCompatibleWith checks if a type is compatible with this numeric type
+func (n *NumericType) IsCompatibleWith(other Type) bool {
+	if n.Name == "numeric" {
+		if b, ok := other.(*BasicType); ok {
+			return b.Name == "int" || b.Name == "float"
+		}
+	}
+	return n.Equals(other)
+}
+
 // Predefined types
 var (
-	NumberType  = &BasicType{"number"}
+	IntType     = &BasicType{"int"}
+	FloatType   = &BasicType{"float"}
+	NumericBaseType = &NumericType{"numeric"}
 	StringType  = &BasicType{"string"}
 	BooleanType = &BasicType{"boolean"}
 	VoidType    = &BasicType{"void"}

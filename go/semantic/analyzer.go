@@ -2,6 +2,7 @@ package semantic
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/antlr4-go/antlr/v4"
 	parser "github.com/hatlonely/mlang/gen/go"
@@ -125,8 +126,12 @@ func (a *Analyzer) AnalyzeExpression(ctx parser.IExprContext) Type {
 	}
 }
 
-func (a *Analyzer) analyzeNumber(_ *parser.NumberContext) Type {
-	return NumberType
+func (a *Analyzer) analyzeNumber(ctx *parser.NumberContext) Type {
+	text := ctx.GetText()
+	if strings.Contains(text, ".") {
+		return FloatType
+	}
+	return IntType
 }
 
 func (a *Analyzer) analyzeString(_ *parser.StringContext) Type {
@@ -209,22 +214,70 @@ func (a *Analyzer) analyzeParens(ctx *parser.ParensContext) Type {
 	return a.AnalyzeExpression(ctx.Expr())
 }
 
+// isNumericType checks if a type is int or float
+func isNumericType(t Type) bool {
+	if bt, ok := t.(*BasicType); ok {
+		return bt.Name == "int" || bt.Name == "float"
+	}
+	return false
+}
+
+// promoteNumericType promotes numeric types according to the rules:
+// int + int -> int
+// int + float -> float  
+// float + int -> float
+// float + float -> float
+func promoteNumericType(left, right Type) Type {
+	if !isNumericType(left) || !isNumericType(right) {
+		return nil
+	}
+	
+	leftBasic := left.(*BasicType)
+	rightBasic := right.(*BasicType)
+	
+	// If either operand is float, result is float
+	if leftBasic.Name == "float" || rightBasic.Name == "float" {
+		return FloatType
+	}
+	
+	// Both are int
+	return IntType
+}
+
 func (a *Analyzer) analyzeBinaryOp(leftCtx, rightCtx parser.IExprContext, op string) Type {
 	leftType := a.AnalyzeExpression(leftCtx)
 	rightType := a.AnalyzeExpression(rightCtx)
 
 	switch op {
 	case "+", "-", "*", "/":
-		// 算术运算符需要两个数字类型
-		if !leftType.Equals(NumberType) {
-			a.AddError(leftCtx, fmt.Sprintf("arithmetic operation requires number type, got %s", leftType))
+		// 算术运算符需要数值类型
+		if !isNumericType(leftType) {
+			a.AddError(leftCtx, fmt.Sprintf("arithmetic operation requires numeric type, got %s", leftType))
 		}
-		if !rightType.Equals(NumberType) {
-			a.AddError(rightCtx, fmt.Sprintf("arithmetic operation requires number type, got %s", rightType))
+		if !isNumericType(rightType) {
+			a.AddError(rightCtx, fmt.Sprintf("arithmetic operation requires numeric type, got %s", rightType))
 		}
-		return NumberType
-	case ">", "<", ">=", "<=", "==", "!=":
-		// 比较运算符需要相同类型
+		
+		// 类型提升：返回提升后的类型
+		if resultType := promoteNumericType(leftType, rightType); resultType != nil {
+			return resultType
+		}
+		return IntType // 默认返回 int 类型
+	case ">", "<", ">=", "<=":
+		// 数值比较：允许 int 和 float 之间的比较
+		if isNumericType(leftType) && isNumericType(rightType) {
+			return BooleanType
+		}
+		// 其他类型必须完全相同
+		if !leftType.Equals(rightType) {
+			a.AddError(rightCtx, fmt.Sprintf("comparison requires same types: %s vs %s", leftType, rightType))
+		}
+		return BooleanType
+	case "==", "!=":
+		// 相等性比较：允许数值类型之间的比较，其他必须相同
+		if isNumericType(leftType) && isNumericType(rightType) {
+			return BooleanType
+		}
 		if !leftType.Equals(rightType) {
 			a.AddError(rightCtx, fmt.Sprintf("comparison requires same types: %s vs %s", leftType, rightType))
 		}
@@ -252,10 +305,10 @@ func (a *Analyzer) analyzeCompareFuncInfix(ctx *parser.CompareFuncInfixContext) 
 		if len(funcType.ParamTypes) != 2 {
 			a.AddError(ctx, fmt.Sprintf("comparison function %s expects 2 parameters", funcName))
 		} else {
-			if !funcType.ParamTypes[0].Equals(leftType) {
+			if !leftType.IsCompatibleWith(funcType.ParamTypes[0]) {
 				a.AddError(ctx.Expr(0), fmt.Sprintf("parameter type mismatch: expected %s, got %s", funcType.ParamTypes[0], leftType))
 			}
-			if !funcType.ParamTypes[1].Equals(rightType) {
+			if !rightType.IsCompatibleWith(funcType.ParamTypes[1]) {
 				a.AddError(ctx.Expr(1), fmt.Sprintf("parameter type mismatch: expected %s, got %s", funcType.ParamTypes[1], rightType))
 			}
 		}
@@ -313,7 +366,7 @@ func (a *Analyzer) analyzeFunctionCall(ctx *parser.FunctionCallContext) Type {
 	for i := 0; i < fixedParamCount && i < len(argTypes); i++ {
 		expectedType := funcType.ParamTypes[i]
 		argType := argTypes[i]
-		if !expectedType.Equals(AnyType) && !argType.Equals(expectedType) {
+		if !expectedType.Equals(AnyType) && !argType.IsCompatibleWith(expectedType) {
 			a.AddError(ctx.ExprList().Expr(i),
 				fmt.Sprintf("argument %d type mismatch: expected %s, got %s", i+1, expectedType, argType))
 		}
@@ -323,7 +376,7 @@ func (a *Analyzer) analyzeFunctionCall(ctx *parser.FunctionCallContext) Type {
 	if funcType.IsVariadic && len(argTypes) > fixedParamCount {
 		for i := fixedParamCount; i < len(argTypes); i++ {
 			argType := argTypes[i]
-			if !funcType.VariadicType.Equals(AnyType) && !argType.Equals(funcType.VariadicType) {
+			if !funcType.VariadicType.Equals(AnyType) && !argType.IsCompatibleWith(funcType.VariadicType) {
 				a.AddError(ctx.ExprList().Expr(i),
 					fmt.Sprintf("variadic argument %d type mismatch: expected %s, got %s",
 						i+1, funcType.VariadicType, argType))

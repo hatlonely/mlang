@@ -63,12 +63,12 @@ func (st *SymbolTable) initBuiltins() {
 	builtinFunctions := map[string]*FunctionType{
 		"len": {
 			ParamTypes: []Type{AnyType},
-			ReturnType: NumberType,
+			ReturnType: IntType, // len 返回整数
 			IsVariadic: false,
 		},
 		"abs": {
-			ParamTypes: []Type{NumberType},
-			ReturnType: NumberType,
+			ParamTypes: []Type{NumericBaseType},
+			ReturnType: NumericBaseType, // abs 保持原类型
 			IsVariadic: false,
 		},
 	}
@@ -77,21 +77,21 @@ func (st *SymbolTable) initBuiltins() {
 	variadicFunctions := map[string]*FunctionType{
 		"max": {
 			ParamTypes:   []Type{}, // 无固定参数
-			ReturnType:   NumberType,
+			ReturnType:   NumericBaseType, // 返回与输入相同的数值类型
 			IsVariadic:   true,
-			VariadicType: NumberType,
+			VariadicType: NumericBaseType,
 		},
 		"min": {
 			ParamTypes:   []Type{}, // 无固定参数
-			ReturnType:   NumberType,
+			ReturnType:   NumericBaseType,
 			IsVariadic:   true,
-			VariadicType: NumberType,
+			VariadicType: NumericBaseType,
 		},
 		"sum": {
 			ParamTypes:   []Type{}, // 无固定参数
-			ReturnType:   NumberType,
+			ReturnType:   NumericBaseType,
 			IsVariadic:   true,
-			VariadicType: NumberType,
+			VariadicType: NumericBaseType,
 		},
 		"concat": {
 			ParamTypes:   []Type{}, // 无固定参数
