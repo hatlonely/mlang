@@ -76,11 +76,11 @@ class mlangParser ( Parser ):
     RULE_arrayElements = 4
     RULE_dictElements = 5
     RULE_dictPair = 6
-    RULE_compareOp = 7
+    RULE_binaryOp = 7
     RULE_func = 8
 
     ruleNames =  [ "prog", "stat", "expr", "exprList", "arrayElements", 
-                   "dictElements", "dictPair", "compareOp", "func" ]
+                   "dictElements", "dictPair", "binaryOp", "func" ]
 
     EOF = Token.EOF
     T__0=1
@@ -486,8 +486,8 @@ class mlangParser ( Parser ):
             else:
                 return self.getTypedRuleContext(mlangParser.ExprContext,i)
 
-        def compareOp(self):
-            return self.getTypedRuleContext(mlangParser.CompareOpContext,0)
+        def binaryOp(self):
+            return self.getTypedRuleContext(mlangParser.BinaryOpContext,0)
 
 
         def enterRule(self, listener:ParseTreeListener):
@@ -692,7 +692,7 @@ class mlangParser ( Parser ):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 9)")
                         self.state = 69
-                        self.compareOp()
+                        self.binaryOp()
                         self.state = 70
                         self.expr(10)
                         pass
@@ -934,7 +934,7 @@ class mlangParser ( Parser ):
         return localctx
 
 
-    class CompareOpContext(ParserRuleContext):
+    class BinaryOpContext(ParserRuleContext):
         __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -945,23 +945,23 @@ class mlangParser ( Parser ):
             return self.getToken(mlangParser.ID, 0)
 
         def getRuleIndex(self):
-            return mlangParser.RULE_compareOp
+            return mlangParser.RULE_binaryOp
 
         def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterCompareOp" ):
-                listener.enterCompareOp(self)
+            if hasattr( listener, "enterBinaryOp" ):
+                listener.enterBinaryOp(self)
 
         def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitCompareOp" ):
-                listener.exitCompareOp(self)
+            if hasattr( listener, "exitBinaryOp" ):
+                listener.exitBinaryOp(self)
 
 
 
 
-    def compareOp(self):
+    def binaryOp(self):
 
-        localctx = mlangParser.CompareOpContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 14, self.RULE_compareOp)
+        localctx = mlangParser.BinaryOpContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 14, self.RULE_binaryOp)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 105

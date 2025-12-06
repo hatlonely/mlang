@@ -62,8 +62,8 @@ type mlangListener interface {
 	// EnterDictPair is called when entering the dictPair production.
 	EnterDictPair(c *DictPairContext)
 
-	// EnterCompareOp is called when entering the compareOp production.
-	EnterCompareOp(c *CompareOpContext)
+	// EnterBinaryOp is called when entering the binaryOp production.
+	EnterBinaryOp(c *BinaryOpContext)
 
 	// EnterFunc is called when entering the func production.
 	EnterFunc(c *FuncContext)
@@ -122,8 +122,8 @@ type mlangListener interface {
 	// ExitDictPair is called when exiting the dictPair production.
 	ExitDictPair(c *DictPairContext)
 
-	// ExitCompareOp is called when exiting the compareOp production.
-	ExitCompareOp(c *CompareOpContext)
+	// ExitBinaryOp is called when exiting the binaryOp production.
+	ExitBinaryOp(c *BinaryOpContext)
 
 	// ExitFunc is called when exiting the func production.
 	ExitFunc(c *FuncContext)

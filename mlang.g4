@@ -9,7 +9,7 @@ expr:
 	expr op = ('*' | '/') expr									# MulDiv
 	| expr op = ('+' | '-') expr								# AddSub
 	| expr op = ('>' | '<' | '>=' | '<=' | '==' | '!=') expr	# CompareSymbol
-	| expr compareOp expr										# CompareFuncInfix
+	| expr binaryOp expr										# CompareFuncInfix
 	| func '(' exprList? ')'									# FunctionCall
 	| '[' arrayElements? ']'									# Array
 	| '{' dictElements? '}'										# Dictionary
@@ -27,7 +27,7 @@ dictElements: dictPair (',' dictPair)*;
 
 dictPair: expr ':' expr;
 
-compareOp: ID;
+binaryOp: ID;
 func: ID;
 
 BOOLEAN: 'TRUE' | 'FALSE' | 'true' | 'false';

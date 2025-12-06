@@ -60,7 +60,7 @@ exprList
 arrayElements
 dictElements
 dictPair
-compareOp
+binaryOp
 func
 
 

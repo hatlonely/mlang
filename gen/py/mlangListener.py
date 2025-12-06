@@ -170,12 +170,12 @@ class mlangListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by mlangParser#compareOp.
-    def enterCompareOp(self, ctx:mlangParser.CompareOpContext):
+    # Enter a parse tree produced by mlangParser#binaryOp.
+    def enterBinaryOp(self, ctx:mlangParser.BinaryOpContext):
         pass
 
-    # Exit a parse tree produced by mlangParser#compareOp.
-    def exitCompareOp(self, ctx:mlangParser.CompareOpContext):
+    # Exit a parse tree produced by mlangParser#binaryOp.
+    def exitBinaryOp(self, ctx:mlangParser.BinaryOpContext):
         pass
 
 

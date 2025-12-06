@@ -129,11 +129,11 @@ func (s *BasemlangListener) EnterDictPair(ctx *DictPairContext) {}
 // ExitDictPair is called when production dictPair is exited.
 func (s *BasemlangListener) ExitDictPair(ctx *DictPairContext) {}
 
-// EnterCompareOp is called when production compareOp is entered.
-func (s *BasemlangListener) EnterCompareOp(ctx *CompareOpContext) {}
+// EnterBinaryOp is called when production binaryOp is entered.
+func (s *BasemlangListener) EnterBinaryOp(ctx *BinaryOpContext) {}
 
-// ExitCompareOp is called when production compareOp is exited.
-func (s *BasemlangListener) ExitCompareOp(ctx *CompareOpContext) {}
+// ExitBinaryOp is called when production binaryOp is exited.
+func (s *BasemlangListener) ExitBinaryOp(ctx *BinaryOpContext) {}
 
 // EnterFunc is called when production func is entered.
 func (s *BasemlangListener) EnterFunc(ctx *FuncContext) {}

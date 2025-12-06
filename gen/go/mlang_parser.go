@@ -42,7 +42,7 @@ func mlangParserInit() {
 	}
 	staticData.RuleNames = []string{
 		"prog", "stat", "expr", "exprList", "arrayElements", "dictElements",
-		"dictPair", "compareOp", "func",
+		"dictPair", "binaryOp", "func",
 	}
 	staticData.PredictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
@@ -165,7 +165,7 @@ const (
 	mlangParserRULE_arrayElements = 4
 	mlangParserRULE_dictElements  = 5
 	mlangParserRULE_dictPair      = 6
-	mlangParserRULE_compareOp     = 7
+	mlangParserRULE_binaryOp      = 7
 	mlangParserRULE_func          = 8
 )
 
@@ -1148,10 +1148,10 @@ func (s *CompareFuncInfixContext) Expr(i int) IExprContext {
 	return t.(IExprContext)
 }
 
-func (s *CompareFuncInfixContext) CompareOp() ICompareOpContext {
+func (s *CompareFuncInfixContext) BinaryOp() IBinaryOpContext {
 	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(ICompareOpContext); ok {
+		if _, ok := ctx.(IBinaryOpContext); ok {
 			t = ctx.(antlr.RuleContext)
 			break
 		}
@@ -1161,7 +1161,7 @@ func (s *CompareFuncInfixContext) CompareOp() ICompareOpContext {
 		return nil
 	}
 
-	return t.(ICompareOpContext)
+	return t.(IBinaryOpContext)
 }
 
 func (s *CompareFuncInfixContext) EnterRule(listener antlr.ParseTreeListener) {
@@ -1521,7 +1521,7 @@ func (p *mlangParser) expr(_p int) (localctx IExprContext) {
 				}
 				{
 					p.SetState(69)
-					p.CompareOp()
+					p.BinaryOp()
 				}
 				{
 					p.SetState(70)
@@ -2179,8 +2179,8 @@ errorExit:
 	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
-// ICompareOpContext is an interface to support dynamic dispatch.
-type ICompareOpContext interface {
+// IBinaryOpContext is an interface to support dynamic dispatch.
+type IBinaryOpContext interface {
 	antlr.ParserRuleContext
 
 	// GetParser returns the parser.
@@ -2189,69 +2189,69 @@ type ICompareOpContext interface {
 	// Getter signatures
 	ID() antlr.TerminalNode
 
-	// IsCompareOpContext differentiates from other interfaces.
-	IsCompareOpContext()
+	// IsBinaryOpContext differentiates from other interfaces.
+	IsBinaryOpContext()
 }
 
-type CompareOpContext struct {
+type BinaryOpContext struct {
 	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
-func NewEmptyCompareOpContext() *CompareOpContext {
-	var p = new(CompareOpContext)
+func NewEmptyBinaryOpContext() *BinaryOpContext {
+	var p = new(BinaryOpContext)
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
-	p.RuleIndex = mlangParserRULE_compareOp
+	p.RuleIndex = mlangParserRULE_binaryOp
 	return p
 }
 
-func InitEmptyCompareOpContext(p *CompareOpContext) {
+func InitEmptyBinaryOpContext(p *BinaryOpContext) {
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
-	p.RuleIndex = mlangParserRULE_compareOp
+	p.RuleIndex = mlangParserRULE_binaryOp
 }
 
-func (*CompareOpContext) IsCompareOpContext() {}
+func (*BinaryOpContext) IsBinaryOpContext() {}
 
-func NewCompareOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *CompareOpContext {
-	var p = new(CompareOpContext)
+func NewBinaryOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *BinaryOpContext {
+	var p = new(BinaryOpContext)
 
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
-	p.RuleIndex = mlangParserRULE_compareOp
+	p.RuleIndex = mlangParserRULE_binaryOp
 
 	return p
 }
 
-func (s *CompareOpContext) GetParser() antlr.Parser { return s.parser }
+func (s *BinaryOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *CompareOpContext) ID() antlr.TerminalNode {
+func (s *BinaryOpContext) ID() antlr.TerminalNode {
 	return s.GetToken(mlangParserID, 0)
 }
 
-func (s *CompareOpContext) GetRuleContext() antlr.RuleContext {
+func (s *BinaryOpContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
 
-func (s *CompareOpContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+func (s *BinaryOpContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-func (s *CompareOpContext) EnterRule(listener antlr.ParseTreeListener) {
+func (s *BinaryOpContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
-		listenerT.EnterCompareOp(s)
+		listenerT.EnterBinaryOp(s)
 	}
 }
 
-func (s *CompareOpContext) ExitRule(listener antlr.ParseTreeListener) {
+func (s *BinaryOpContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
-		listenerT.ExitCompareOp(s)
+		listenerT.ExitBinaryOp(s)
 	}
 }
 
-func (p *mlangParser) CompareOp() (localctx ICompareOpContext) {
-	localctx = NewCompareOpContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 14, mlangParserRULE_compareOp)
+func (p *mlangParser) BinaryOp() (localctx IBinaryOpContext) {
+	localctx = NewBinaryOpContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 14, mlangParserRULE_binaryOp)
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(105)
