@@ -54,9 +54,9 @@ func (a *Analyzer) RegisterFunction(name string, paramTypes []Type, returnType T
 	return a.symbolTable.RegisterFunction(name, paramTypes, returnType)
 }
 
-// RegisterCompareOp 向分析器注册一个比较运算符
-func (a *Analyzer) RegisterCompareOp(name string, leftType, rightType, returnType Type) error {
-	return a.symbolTable.RegisterCompareOp(name, leftType, rightType, returnType)
+// RegisterBinaryOp 向分析器注册一个比较运算符
+func (a *Analyzer) RegisterBinaryOp(name string, leftType, rightType, returnType Type) error {
+	return a.symbolTable.RegisterBinaryOp(name, leftType, rightType, returnType)
 }
 
 // UnregisterFunction 从分析器中删除一个函数
@@ -77,13 +77,13 @@ func (a *Analyzer) GetSymbolTable() *SymbolTable {
 // AnalyzeProgram analyzes the entire program
 func (a *Analyzer) AnalyzeProgram(ctx *parser.ProgContext) Type {
 	var lastType Type = VoidType
-	
+
 	for _, statCtx := range ctx.AllStat() {
 		if exprCtx := statCtx.Expr(); exprCtx != nil {
 			lastType = a.AnalyzeExpression(exprCtx)
 		}
 	}
-	
+
 	return lastType
 }
 
@@ -147,15 +147,15 @@ func (a *Analyzer) analyzeArray(ctx *parser.ArrayContext) Type {
 		// 空数组，推断为 any 类型数组
 		return &ArrayType{ElementType: AnyType}
 	}
-	
+
 	elements := ctx.ArrayElements().AllExpr()
 	if len(elements) == 0 {
 		return &ArrayType{ElementType: AnyType}
 	}
-	
+
 	// 分析第一个元素确定数组类型
 	elementType := a.AnalyzeExpression(elements[0])
-	
+
 	// 检查所有元素类型是否一致
 	for i := 1; i < len(elements); i++ {
 		exprType := a.AnalyzeExpression(elements[i])
@@ -163,7 +163,7 @@ func (a *Analyzer) analyzeArray(ctx *parser.ArrayContext) Type {
 			a.AddError(elements[i], fmt.Sprintf("array element type mismatch: expected %s, got %s", elementType, exprType))
 		}
 	}
-	
+
 	return &ArrayType{ElementType: elementType}
 }
 
@@ -172,23 +172,23 @@ func (a *Analyzer) analyzeDictionary(ctx *parser.DictionaryContext) Type {
 		// 空字典，推断为 any:any 类型
 		return &DictType{KeyType: AnyType, ValueType: AnyType}
 	}
-	
+
 	pairs := ctx.DictElements().AllDictPair()
 	if len(pairs) == 0 {
 		return &DictType{KeyType: AnyType, ValueType: AnyType}
 	}
-	
+
 	// 分析第一个键值对确定字典类型
 	firstPair := pairs[0]
 	keyType := a.AnalyzeExpression(firstPair.Expr(0))
 	valueType := a.AnalyzeExpression(firstPair.Expr(1))
-	
+
 	// 检查所有键值对类型是否一致
 	for i := 1; i < len(pairs); i++ {
 		pair := pairs[i]
 		kType := a.AnalyzeExpression(pair.Expr(0))
 		vType := a.AnalyzeExpression(pair.Expr(1))
-		
+
 		if !keyType.Equals(kType) {
 			a.AddError(pair.Expr(0), fmt.Sprintf("dictionary key type mismatch: expected %s, got %s", keyType, kType))
 		}
@@ -196,7 +196,7 @@ func (a *Analyzer) analyzeDictionary(ctx *parser.DictionaryContext) Type {
 			a.AddError(pair.Expr(1), fmt.Sprintf("dictionary value type mismatch: expected %s, got %s", valueType, vType))
 		}
 	}
-	
+
 	return &DictType{KeyType: keyType, ValueType: valueType}
 }
 
@@ -207,7 +207,7 @@ func (a *Analyzer) analyzeParens(ctx *parser.ParensContext) Type {
 func (a *Analyzer) analyzeBinaryOp(leftCtx, rightCtx parser.IExprContext, op string) Type {
 	leftType := a.AnalyzeExpression(leftCtx)
 	rightType := a.AnalyzeExpression(rightCtx)
-	
+
 	switch op {
 	case "+", "-", "*", "/":
 		// 算术运算符需要两个数字类型
@@ -231,17 +231,17 @@ func (a *Analyzer) analyzeBinaryOp(leftCtx, rightCtx parser.IExprContext, op str
 }
 
 func (a *Analyzer) analyzeCompareFuncInfix(ctx *parser.CompareFuncInfixContext) Type {
-	funcName := ctx.CompareOp().GetText()
+	funcName := ctx.BinaryOp().GetText()
 	leftType := a.AnalyzeExpression(ctx.Expr(0))
 	rightType := a.AnalyzeExpression(ctx.Expr(1))
-	
+
 	// 查找比较函数
 	symbol, exists := a.symbolTable.Lookup(funcName)
 	if !exists {
 		a.AddError(ctx, fmt.Sprintf("undefined comparison function: %s", funcName))
 		return BooleanType // 假设比较函数返回布尔值
 	}
-	
+
 	if funcType, ok := symbol.Type.(*FunctionType); ok {
 		// 检查参数类型
 		if len(funcType.ParamTypes) != 2 {
@@ -256,27 +256,27 @@ func (a *Analyzer) analyzeCompareFuncInfix(ctx *parser.CompareFuncInfixContext) 
 		}
 		return funcType.ReturnType
 	}
-	
+
 	a.AddError(ctx, fmt.Sprintf("%s is not a function", funcName))
 	return BooleanType
 }
 
 func (a *Analyzer) analyzeFunctionCall(ctx *parser.FunctionCallContext) Type {
 	funcName := ctx.Func_().GetText()
-	
+
 	// 查找函数符号
 	symbol, exists := a.symbolTable.Lookup(funcName)
 	if !exists {
 		a.AddError(ctx, fmt.Sprintf("undefined function: %s", funcName))
 		return AnyType
 	}
-	
+
 	funcType, ok := symbol.Type.(*FunctionType)
 	if !ok {
 		a.AddError(ctx, fmt.Sprintf("%s is not a function", funcName))
 		return AnyType
 	}
-	
+
 	// 分析参数
 	var argTypes []Type
 	if ctx.ExprList() != nil {
@@ -284,23 +284,23 @@ func (a *Analyzer) analyzeFunctionCall(ctx *parser.FunctionCallContext) Type {
 			argTypes = append(argTypes, a.AnalyzeExpression(exprCtx))
 		}
 	}
-	
+
 	// 检查参数数量
 	if len(argTypes) != len(funcType.ParamTypes) {
-		a.AddError(ctx, fmt.Sprintf("function %s expects %d arguments, got %d", 
+		a.AddError(ctx, fmt.Sprintf("function %s expects %d arguments, got %d",
 			funcName, len(funcType.ParamTypes), len(argTypes)))
 		return funcType.ReturnType
 	}
-	
+
 	// 检查参数类型
 	for i, argType := range argTypes {
 		expectedType := funcType.ParamTypes[i]
 		if !expectedType.Equals(AnyType) && !argType.Equals(expectedType) {
-			a.AddError(ctx.ExprList().Expr(i), 
+			a.AddError(ctx.ExprList().Expr(i),
 				fmt.Sprintf("argument %d type mismatch: expected %s, got %s", i+1, expectedType, argType))
 		}
 	}
-	
+
 	return funcType.ReturnType
 }
 
@@ -309,14 +309,14 @@ func AnalyzeCode(input string) ([]*SemanticError, Type) {
 	lexer := parser.NewmlangLexer(antlr.NewInputStream(input))
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := parser.NewmlangParser(stream)
-	
+
 	// Parse the input
 	tree := p.Prog()
-	
+
 	// Create analyzer and analyze
 	analyzer := NewAnalyzer()
 	resultType := analyzer.AnalyzeProgram(tree.(*parser.ProgContext))
-	
+
 	return analyzer.GetErrors(), resultType
 }
 
@@ -325,15 +325,15 @@ func AnalyzeCodeWithAnalyzer(input string, analyzer *Analyzer) ([]*SemanticError
 	lexer := parser.NewmlangLexer(antlr.NewInputStream(input))
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := parser.NewmlangParser(stream)
-	
+
 	// Parse the input
 	tree := p.Prog()
-	
+
 	// Clear previous errors
 	analyzer.errors = make([]*SemanticError, 0)
-	
+
 	// Analyze with the provided analyzer
 	resultType := analyzer.AnalyzeProgram(tree.(*parser.ProgContext))
-	
+
 	return analyzer.GetErrors(), resultType
 }

@@ -111,8 +111,8 @@ func (st *SymbolTable) RegisterFunction(name string, paramTypes []Type, returnTy
 	return st.globalScope.Define(name, funcType)
 }
 
-// RegisterCompareOp 注册一个比较运算符函数
-func (st *SymbolTable) RegisterCompareOp(name string, leftType, rightType, returnType Type) error {
+// RegisterBinaryOp 注册一个比较运算符函数
+func (st *SymbolTable) RegisterBinaryOp(name string, leftType, rightType, returnType Type) error {
 	funcType := &FunctionType{
 		ParamTypes: []Type{leftType, rightType},
 		ReturnType: returnType,
