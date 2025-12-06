@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/antlr4-go/antlr/v4"
-	parser "github.com/hatlonely/mlang/go/parser"
+	parser "github.com/hatlonely/mlang/gen/go"
 )
 
 // SemanticError represents a semantic analysis error
