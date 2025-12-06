@@ -3,7 +3,7 @@ grammar mlang;
 // 解析规则
 prog: stat+ EOF;
 
-stat: expr NEWLINE | NEWLINE;
+stat: expr NEWLINE? | NEWLINE;
 
 expr:
 	expr op = ('*' | '/') expr									# MulDiv

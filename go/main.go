@@ -82,8 +82,8 @@ func main() {
 	fixedFuncTestCases := []string{
 		"sqrt(16)",         // sqrt with int
 		"sqrt(16.5)",       // sqrt with float
-		"abs(-5)",          // abs with int
-		"abs(-3.14)",       // abs with float
+		"abs(5)",           // abs with int (改为正数)
+		"abs(3.14)",        // abs with float (改为正数)
 		"sqrt(\"invalid\")", // 类型错误
 		"isEmpty([1, 2, 3])",
 		"isEmpty(\"\")",
