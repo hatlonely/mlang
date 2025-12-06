@@ -15,8 +15,12 @@ func main() {
 	// 注册自定义函数
 	fmt.Println("注册自定义函数:")
 	analyzer.RegisterFunction("sqrt", []semantic.Type{semantic.NumberType}, semantic.NumberType)
-	analyzer.RegisterFunction("concat", []semantic.Type{semantic.StringType, semantic.StringType}, semantic.StringType)
 	analyzer.RegisterFunction("isEmpty", []semantic.Type{semantic.AnyType}, semantic.BooleanType)
+	
+	// 注册可变参数函数
+	fmt.Println("注册可变参数函数:")
+	analyzer.RegisterVariadicFunction("add", []semantic.Type{}, semantic.NumberType, semantic.NumberType)
+	analyzer.RegisterVariadicFunction("multiply", []semantic.Type{semantic.NumberType}, semantic.NumberType, semantic.NumberType) // 至少1个参数
 
 	// 注册自定义比较运算符
 	analyzer.RegisterBinaryOp("contains", semantic.StringType, semantic.StringType, semantic.BooleanType)
@@ -35,23 +39,46 @@ func main() {
 		"[1, \"hello\"]", // 类型不一致，应该报错
 		"{\"name\": \"test\", \"age\": 25}",
 		"len([1, 2, 3])",
-		"max(1, 2)",
-		"max(1, \"2\")", // 参数类型错误
 	}
 
 	runTestCases(basicTestCases, analyzer)
 
-	fmt.Println("\n=== 自定义函数测试 ===")
-	customFuncTestCases := []string{
+	fmt.Println("\n=== 内置可变参数函数测试 ===")
+	variadicTestCases := []string{
+		"max(1)",           // 单个参数
+		"max(1, 2)",        // 两个参数
+		"max(1, 2, 3, 4)",  // 多个参数
+		"min(5, 3, 8, 1)",  // min函数
+		"sum(1, 2, 3, 4, 5)", // sum函数
+		"concat(\"hello\", \" \", \"world\", \"!\")", // 字符串拼接
+		"max(1, \"2\")",     // 类型错误
+		"sum()",            // 空参数（应该允许）
+		"concat(\"a\", 123)", // 混合类型错误
+	}
+
+	runTestCases(variadicTestCases, analyzer)
+
+	fmt.Println("\n=== 自定义可变参数函数测试 ===")
+	customVariadicTestCases := []string{
+		"add(1, 2, 3)",      // 自定义add函数
+		"add()",             // 无参数（应该允许）
+		"multiply(2)",       // 最少1个参数
+		"multiply(2, 3, 4)", // 多个参数
+		"multiply()",        // 参数不足（应该报错）
+		"add(1, \"2\")",     // 类型错误
+	}
+
+	runTestCases(customVariadicTestCases, analyzer)
+
+	fmt.Println("\n=== 固定参数函数测试 ===")
+	fixedFuncTestCases := []string{
 		"sqrt(16)",
 		"sqrt(\"invalid\")", // 类型错误
-		"concat(\"hello\", \" world\")",
-		"concat(1, 2)", // 类型错误
 		"isEmpty([1, 2, 3])",
 		"isEmpty(\"\")",
 	}
 
-	runTestCases(customFuncTestCases, analyzer)
+	runTestCases(fixedFuncTestCases, analyzer)
 
 	fmt.Println("\n=== 自定义比较运算符测试 ===")
 	customCompareTestCases := []string{
@@ -63,21 +90,32 @@ func main() {
 
 	runTestCases(customCompareTestCases, analyzer)
 
-	fmt.Println("\n=== 函数管理演示 ===")
-	fmt.Println("删除 sqrt 函数:")
-	analyzer.UnregisterFunction("sqrt")
-
-	errors, _ := semantic.AnalyzeCodeWithAnalyzer("sqrt(16)", analyzer)
-	if len(errors) > 0 {
-		fmt.Printf("  预期错误: %s\n", errors[0].Error())
+	fmt.Println("\n=== 可变参数函数管理演示 ===")
+	fmt.Println("注册一个更复杂的可变参数函数 (average):")
+	analyzer.RegisterVariadicFunction("average", []semantic.Type{}, semantic.NumberType, semantic.NumberType)
+	
+	fmt.Println("测试 average 函数:")
+	averageTests := []string{
+		"average(1, 2, 3, 4, 5)",
+		"average(10)",
+		"average()",
+		"average(1, 2, \"3\")", // 类型错误
+	}
+	for _, test := range averageTests {
+		errors, resultType := semantic.AnalyzeCodeWithAnalyzer(test, analyzer)
+		if len(errors) > 0 {
+			fmt.Printf("  %s -> 错误: %s\n", test, errors[0].Error())
+		} else {
+			fmt.Printf("  %s -> 成功: %s\n", test, resultType.String())
+		}
 	}
 
-	fmt.Println("\n重新注册 sqrt 函数 (支持字符串参数):")
-	analyzer.RegisterFunction("sqrt", []semantic.Type{semantic.AnyType}, semantic.NumberType)
+	fmt.Println("\n删除可变参数函数 add:")
+	analyzer.UnregisterFunction("add")
 
-	errors, resultType := semantic.AnalyzeCodeWithAnalyzer("sqrt(\"16\")", analyzer)
-	if len(errors) == 0 {
-		fmt.Printf("  成功: 结果类型 %s\n", resultType.String())
+	errors, _ := semantic.AnalyzeCodeWithAnalyzer("add(1, 2, 3)", analyzer)
+	if len(errors) > 0 {
+		fmt.Printf("  预期错误: %s\n", errors[0].Error())
 	}
 
 	fmt.Println("\n=== 最终函数列表 ===")

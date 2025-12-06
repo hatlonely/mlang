@@ -54,6 +54,11 @@ func (a *Analyzer) RegisterFunction(name string, paramTypes []Type, returnType T
 	return a.symbolTable.RegisterFunction(name, paramTypes, returnType)
 }
 
+// RegisterVariadicFunction 向分析器注册一个新的可变参数函数
+func (a *Analyzer) RegisterVariadicFunction(name string, paramTypes []Type, variadicType Type, returnType Type) error {
+	return a.symbolTable.RegisterVariadicFunction(name, paramTypes, variadicType, returnType)
+}
+
 // RegisterBinaryOp 向分析器注册一个比较运算符
 func (a *Analyzer) RegisterBinaryOp(name string, leftType, rightType, returnType Type) error {
 	return a.symbolTable.RegisterBinaryOp(name, leftType, rightType, returnType)
@@ -286,18 +291,43 @@ func (a *Analyzer) analyzeFunctionCall(ctx *parser.FunctionCallContext) Type {
 	}
 
 	// 检查参数数量
-	if len(argTypes) != len(funcType.ParamTypes) {
-		a.AddError(ctx, fmt.Sprintf("function %s expects %d arguments, got %d",
-			funcName, len(funcType.ParamTypes), len(argTypes)))
-		return funcType.ReturnType
+	if funcType.IsVariadic {
+		// 可变参数函数：至少要有固定参数的数量
+		minArgs := len(funcType.ParamTypes)
+		if len(argTypes) < minArgs {
+			a.AddError(ctx, fmt.Sprintf("variadic function %s expects at least %d arguments, got %d",
+				funcName, minArgs, len(argTypes)))
+			return funcType.ReturnType
+		}
+	} else {
+		// 固定参数函数：参数数量必须完全匹配
+		if len(argTypes) != len(funcType.ParamTypes) {
+			a.AddError(ctx, fmt.Sprintf("function %s expects %d arguments, got %d",
+				funcName, len(funcType.ParamTypes), len(argTypes)))
+			return funcType.ReturnType
+		}
 	}
 
-	// 检查参数类型
-	for i, argType := range argTypes {
+	// 检查固定参数类型
+	fixedParamCount := len(funcType.ParamTypes)
+	for i := 0; i < fixedParamCount && i < len(argTypes); i++ {
 		expectedType := funcType.ParamTypes[i]
+		argType := argTypes[i]
 		if !expectedType.Equals(AnyType) && !argType.Equals(expectedType) {
 			a.AddError(ctx.ExprList().Expr(i),
 				fmt.Sprintf("argument %d type mismatch: expected %s, got %s", i+1, expectedType, argType))
+		}
+	}
+
+	// 检查可变参数类型
+	if funcType.IsVariadic && len(argTypes) > fixedParamCount {
+		for i := fixedParamCount; i < len(argTypes); i++ {
+			argType := argTypes[i]
+			if !funcType.VariadicType.Equals(AnyType) && !argType.Equals(funcType.VariadicType) {
+				a.AddError(ctx.ExprList().Expr(i),
+					fmt.Sprintf("variadic argument %d type mismatch: expected %s, got %s",
+						i+1, funcType.VariadicType, argType))
+			}
 		}
 	}
 

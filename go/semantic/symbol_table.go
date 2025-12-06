@@ -64,22 +64,50 @@ func (st *SymbolTable) initBuiltins() {
 		"len": {
 			ParamTypes: []Type{AnyType},
 			ReturnType: NumberType,
-		},
-		"max": {
-			ParamTypes: []Type{NumberType, NumberType},
-			ReturnType: NumberType,
-		},
-		"min": {
-			ParamTypes: []Type{NumberType, NumberType},
-			ReturnType: NumberType,
+			IsVariadic: false,
 		},
 		"abs": {
 			ParamTypes: []Type{NumberType},
 			ReturnType: NumberType,
+			IsVariadic: false,
 		},
 	}
 
+	// 添加可变参数内置函数
+	variadicFunctions := map[string]*FunctionType{
+		"max": {
+			ParamTypes:   []Type{}, // 无固定参数
+			ReturnType:   NumberType,
+			IsVariadic:   true,
+			VariadicType: NumberType,
+		},
+		"min": {
+			ParamTypes:   []Type{}, // 无固定参数
+			ReturnType:   NumberType,
+			IsVariadic:   true,
+			VariadicType: NumberType,
+		},
+		"sum": {
+			ParamTypes:   []Type{}, // 无固定参数
+			ReturnType:   NumberType,
+			IsVariadic:   true,
+			VariadicType: NumberType,
+		},
+		"concat": {
+			ParamTypes:   []Type{}, // 无固定参数
+			ReturnType:   StringType,
+			IsVariadic:   true,
+			VariadicType: StringType,
+		},
+	}
+
+	// 注册固定参数函数
 	for name, funcType := range builtinFunctions {
+		st.globalScope.Define(name, funcType)
+	}
+
+	// 注册可变参数函数
+	for name, funcType := range variadicFunctions {
 		st.globalScope.Define(name, funcType)
 	}
 }
@@ -107,6 +135,18 @@ func (st *SymbolTable) RegisterFunction(name string, paramTypes []Type, returnTy
 	funcType := &FunctionType{
 		ParamTypes: paramTypes,
 		ReturnType: returnType,
+		IsVariadic: false,
+	}
+	return st.globalScope.Define(name, funcType)
+}
+
+// RegisterVariadicFunction 注册一个新的可变参数函数
+func (st *SymbolTable) RegisterVariadicFunction(name string, paramTypes []Type, variadicType Type, returnType Type) error {
+	funcType := &FunctionType{
+		ParamTypes:   paramTypes,
+		ReturnType:   returnType,
+		IsVariadic:   true,
+		VariadicType: variadicType,
 	}
 	return st.globalScope.Define(name, funcType)
 }

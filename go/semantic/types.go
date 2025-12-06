@@ -59,8 +59,10 @@ func (d *DictType) Equals(other Type) bool {
 
 // FunctionType represents function types
 type FunctionType struct {
-	ParamTypes []Type
-	ReturnType Type
+	ParamTypes   []Type
+	ReturnType   Type
+	IsVariadic   bool // 是否为可变参数函数
+	VariadicType Type // 可变参数的类型（当IsVariadic为true时有效）
 }
 
 func (f *FunctionType) String() string {
@@ -71,6 +73,12 @@ func (f *FunctionType) String() string {
 		}
 		params += p.String()
 	}
+	if f.IsVariadic {
+		if len(f.ParamTypes) > 0 {
+			params += ", "
+		}
+		params += "..." + f.VariadicType.String()
+	}
 	params += ")"
 	return fmt.Sprintf("%s -> %s", params, f.ReturnType.String())
 }
@@ -80,10 +88,16 @@ func (f *FunctionType) Equals(other Type) bool {
 		if len(f.ParamTypes) != len(o.ParamTypes) {
 			return false
 		}
+		if f.IsVariadic != o.IsVariadic {
+			return false
+		}
 		for i, p := range f.ParamTypes {
 			if !p.Equals(o.ParamTypes[i]) {
 				return false
 			}
+		}
+		if f.IsVariadic && !f.VariadicType.Equals(o.VariadicType) {
+			return false
 		}
 		return f.ReturnType.Equals(o.ReturnType)
 	}
