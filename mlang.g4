@@ -11,6 +11,8 @@ expr:
 	| expr op = ('>' | '<' | '>=' | '<=' | '==' | '!=') expr	# CompareSymbol
 	| expr compareOp expr										# CompareFuncInfix
 	| func '(' exprList? ')'									# FunctionCall
+	| '[' arrayElements? ']'									# Array
+	| '{' dictElements? '}'										# Dictionary
 	| '(' expr ')'												# Parens
 	| NUMBER													# Number
 	| STRING													# String
@@ -18,6 +20,12 @@ expr:
 	| ID														# Id;
 
 exprList: expr (',' expr)*;
+
+arrayElements: expr (',' expr)*;
+
+dictElements: dictPair (',' dictPair)*;
+
+dictPair: expr ':' expr;
 
 compareOp: ID;
 func: ID;
