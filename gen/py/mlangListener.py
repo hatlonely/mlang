@@ -26,6 +26,24 @@ class mlangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by mlangParser#Array.
+    def enterArray(self, ctx:mlangParser.ArrayContext):
+        pass
+
+    # Exit a parse tree produced by mlangParser#Array.
+    def exitArray(self, ctx:mlangParser.ArrayContext):
+        pass
+
+
+    # Enter a parse tree produced by mlangParser#Dictionary.
+    def enterDictionary(self, ctx:mlangParser.DictionaryContext):
+        pass
+
+    # Exit a parse tree produced by mlangParser#Dictionary.
+    def exitDictionary(self, ctx:mlangParser.DictionaryContext):
+        pass
+
+
     # Enter a parse tree produced by mlangParser#Number.
     def enterNumber(self, ctx:mlangParser.NumberContext):
         pass
@@ -122,6 +140,33 @@ class mlangListener(ParseTreeListener):
 
     # Exit a parse tree produced by mlangParser#exprList.
     def exitExprList(self, ctx:mlangParser.ExprListContext):
+        pass
+
+
+    # Enter a parse tree produced by mlangParser#arrayElements.
+    def enterArrayElements(self, ctx:mlangParser.ArrayElementsContext):
+        pass
+
+    # Exit a parse tree produced by mlangParser#arrayElements.
+    def exitArrayElements(self, ctx:mlangParser.ArrayElementsContext):
+        pass
+
+
+    # Enter a parse tree produced by mlangParser#dictElements.
+    def enterDictElements(self, ctx:mlangParser.DictElementsContext):
+        pass
+
+    # Exit a parse tree produced by mlangParser#dictElements.
+    def exitDictElements(self, ctx:mlangParser.DictElementsContext):
+        pass
+
+
+    # Enter a parse tree produced by mlangParser#dictPair.
+    def enterDictPair(self, ctx:mlangParser.DictPairContext):
+        pass
+
+    # Exit a parse tree produced by mlangParser#dictPair.
+    def exitDictPair(self, ctx:mlangParser.DictPairContext):
         pass
 
 
