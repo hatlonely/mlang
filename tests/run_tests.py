@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from test_basic_types import TestBasicTypes
 from test_expressions import TestExpressions
 from test_complex_cases import TestComplexCases
+from test_collections import TestCollections
 
 
 def create_test_suite():
@@ -25,6 +26,9 @@ def create_test_suite():
     
     # 添加表达式测试
     suite.addTest(unittest.makeSuite(TestExpressions))
+    
+    # 添加集合类型测试（数组和字典）
+    suite.addTest(unittest.makeSuite(TestCollections))
     
     # 添加复杂案例测试
     suite.addTest(unittest.makeSuite(TestComplexCases))
