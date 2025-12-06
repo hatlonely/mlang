@@ -1,0 +1,76 @@
+# mlang 语法样例文件
+# 展示 mlang.g4 文法支持的各种语法特性
+
+# 1. 数字字面量
+42
+3.14
+123.456
+
+# 2. 字符串字面量
+"hello world"
+"带有\"转义字符\"的字符串"
+"包含\n换行符\t制表符的字符串"
+`原始字符串，不需要转义 "quotes" and \backslashes`
+`多行原始字符串
+可以包含任何字符
+除了反引号`
+
+# 3. 布尔字面量
+TRUE
+FALSE
+true
+false
+
+# 4. 标识符
+variable_name
+myFunction
+_private_var
+counter123
+
+# 5. 算术表达式
+1 + 2
+3.14 * 2
+10 / 3
+15 - 7
+2 + 3 * 4
+(2 + 3) * 4
+
+# 6. 比较表达式
+5 > 3
+10 <= 20
+42 == 42
+"hello" != "world"
+3.14 >= 3.0
+x < y
+
+# 7. 函数调用
+print("hello world")
+add(1, 2)
+max(10, 20, 30)
+calculate()
+process("data", 123, true)
+
+# 8. 复合表达式
+add(1 + 2, 3 * 4)
+compare("hello", "world") and TRUE
+func1(func2(x), y + z)
+
+# 9. 比较函数（中缀表达式）
+x equals y
+a contains b
+str matches pattern
+
+# 10. 混合类型表达式
+"Score: " + score
+age >= 18 and name != ""
+calculate(3.14, "pi") > threshold
+
+# 11. 复杂嵌套表达式
+((x + y) * z) / (a - b)
+func(1, func2(2 + 3), "test")
+(score > 90) and (grade == "A") or retry
+
+# 12. 带括号的表达式
+(1 + 2) * (3 + 4)
+((a + b) * c) / (d - e)
+func((x + y), (z * 2))

@@ -1,4 +1,4 @@
-grammar Expr;
+grammar mlang;
 
 // 解析规则
 prog: stat+ EOF;
