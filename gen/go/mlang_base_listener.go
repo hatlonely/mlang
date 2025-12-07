@@ -33,23 +33,11 @@ func (s *BasemlangListener) EnterStat(ctx *StatContext) {}
 // ExitStat is called when production stat is exited.
 func (s *BasemlangListener) ExitStat(ctx *StatContext) {}
 
-// EnterArray is called when production Array is entered.
-func (s *BasemlangListener) EnterArray(ctx *ArrayContext) {}
-
-// ExitArray is called when production Array is exited.
-func (s *BasemlangListener) ExitArray(ctx *ArrayContext) {}
-
 // EnterDictionary is called when production Dictionary is entered.
 func (s *BasemlangListener) EnterDictionary(ctx *DictionaryContext) {}
 
 // ExitDictionary is called when production Dictionary is exited.
 func (s *BasemlangListener) ExitDictionary(ctx *DictionaryContext) {}
-
-// EnterNumber is called when production Number is entered.
-func (s *BasemlangListener) EnterNumber(ctx *NumberContext) {}
-
-// ExitNumber is called when production Number is exited.
-func (s *BasemlangListener) ExitNumber(ctx *NumberContext) {}
 
 // EnterMulDiv is called when production MulDiv is entered.
 func (s *BasemlangListener) EnterMulDiv(ctx *MulDivContext) {}
@@ -75,17 +63,35 @@ func (s *BasemlangListener) EnterCompareSymbol(ctx *CompareSymbolContext) {}
 // ExitCompareSymbol is called when production CompareSymbol is exited.
 func (s *BasemlangListener) ExitCompareSymbol(ctx *CompareSymbolContext) {}
 
-// EnterFunctionCall is called when production FunctionCall is entered.
-func (s *BasemlangListener) EnterFunctionCall(ctx *FunctionCallContext) {}
-
-// ExitFunctionCall is called when production FunctionCall is exited.
-func (s *BasemlangListener) ExitFunctionCall(ctx *FunctionCallContext) {}
-
 // EnterString is called when production String is entered.
 func (s *BasemlangListener) EnterString(ctx *StringContext) {}
 
 // ExitString is called when production String is exited.
 func (s *BasemlangListener) ExitString(ctx *StringContext) {}
+
+// EnterCompareFuncInfix is called when production CompareFuncInfix is entered.
+func (s *BasemlangListener) EnterCompareFuncInfix(ctx *CompareFuncInfixContext) {}
+
+// ExitCompareFuncInfix is called when production CompareFuncInfix is exited.
+func (s *BasemlangListener) ExitCompareFuncInfix(ctx *CompareFuncInfixContext) {}
+
+// EnterArray is called when production Array is entered.
+func (s *BasemlangListener) EnterArray(ctx *ArrayContext) {}
+
+// ExitArray is called when production Array is exited.
+func (s *BasemlangListener) ExitArray(ctx *ArrayContext) {}
+
+// EnterNumber is called when production Number is entered.
+func (s *BasemlangListener) EnterNumber(ctx *NumberContext) {}
+
+// ExitNumber is called when production Number is exited.
+func (s *BasemlangListener) ExitNumber(ctx *NumberContext) {}
+
+// EnterFunctionCall is called when production FunctionCall is entered.
+func (s *BasemlangListener) EnterFunctionCall(ctx *FunctionCallContext) {}
+
+// ExitFunctionCall is called when production FunctionCall is exited.
+func (s *BasemlangListener) ExitFunctionCall(ctx *FunctionCallContext) {}
 
 // EnterId is called when production Id is entered.
 func (s *BasemlangListener) EnterId(ctx *IdContext) {}
@@ -99,11 +105,11 @@ func (s *BasemlangListener) EnterBoolean(ctx *BooleanContext) {}
 // ExitBoolean is called when production Boolean is exited.
 func (s *BasemlangListener) ExitBoolean(ctx *BooleanContext) {}
 
-// EnterCompareFuncInfix is called when production CompareFuncInfix is entered.
-func (s *BasemlangListener) EnterCompareFuncInfix(ctx *CompareFuncInfixContext) {}
+// EnterFieldAccess is called when production FieldAccess is entered.
+func (s *BasemlangListener) EnterFieldAccess(ctx *FieldAccessContext) {}
 
-// ExitCompareFuncInfix is called when production CompareFuncInfix is exited.
-func (s *BasemlangListener) ExitCompareFuncInfix(ctx *CompareFuncInfixContext) {}
+// ExitFieldAccess is called when production FieldAccess is exited.
+func (s *BasemlangListener) ExitFieldAccess(ctx *FieldAccessContext) {}
 
 // EnterExprList is called when production exprList is entered.
 func (s *BasemlangListener) EnterExprList(ctx *ExprListContext) {}

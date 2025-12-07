@@ -10,6 +10,7 @@ expr:
 	| expr op = ('+' | '-') expr								# AddSub
 	| expr op = ('>' | '<' | '>=' | '<=' | '==' | '!=') expr	# CompareSymbol
 	| expr binaryOp expr										# CompareFuncInfix
+	| expr DOT ID												# FieldAccess
 	| func '(' exprList? ')'									# FunctionCall
 	| '[' arrayElements? ']'									# Array
 	| '{' dictElements? '}'										# Dictionary
@@ -30,6 +31,7 @@ dictPair: expr ':' expr;
 binaryOp: ID;
 func: ID;
 
+DOT: '.';
 BOOLEAN: 'TRUE' | 'FALSE' | 'true' | 'false';
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 NUMBER: [0-9]+ ('.' [0-9]+)?;

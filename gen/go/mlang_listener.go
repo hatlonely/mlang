@@ -14,14 +14,8 @@ type mlangListener interface {
 	// EnterStat is called when entering the stat production.
 	EnterStat(c *StatContext)
 
-	// EnterArray is called when entering the Array production.
-	EnterArray(c *ArrayContext)
-
 	// EnterDictionary is called when entering the Dictionary production.
 	EnterDictionary(c *DictionaryContext)
-
-	// EnterNumber is called when entering the Number production.
-	EnterNumber(c *NumberContext)
 
 	// EnterMulDiv is called when entering the MulDiv production.
 	EnterMulDiv(c *MulDivContext)
@@ -35,11 +29,20 @@ type mlangListener interface {
 	// EnterCompareSymbol is called when entering the CompareSymbol production.
 	EnterCompareSymbol(c *CompareSymbolContext)
 
-	// EnterFunctionCall is called when entering the FunctionCall production.
-	EnterFunctionCall(c *FunctionCallContext)
-
 	// EnterString is called when entering the String production.
 	EnterString(c *StringContext)
+
+	// EnterCompareFuncInfix is called when entering the CompareFuncInfix production.
+	EnterCompareFuncInfix(c *CompareFuncInfixContext)
+
+	// EnterArray is called when entering the Array production.
+	EnterArray(c *ArrayContext)
+
+	// EnterNumber is called when entering the Number production.
+	EnterNumber(c *NumberContext)
+
+	// EnterFunctionCall is called when entering the FunctionCall production.
+	EnterFunctionCall(c *FunctionCallContext)
 
 	// EnterId is called when entering the Id production.
 	EnterId(c *IdContext)
@@ -47,8 +50,8 @@ type mlangListener interface {
 	// EnterBoolean is called when entering the Boolean production.
 	EnterBoolean(c *BooleanContext)
 
-	// EnterCompareFuncInfix is called when entering the CompareFuncInfix production.
-	EnterCompareFuncInfix(c *CompareFuncInfixContext)
+	// EnterFieldAccess is called when entering the FieldAccess production.
+	EnterFieldAccess(c *FieldAccessContext)
 
 	// EnterExprList is called when entering the exprList production.
 	EnterExprList(c *ExprListContext)
@@ -74,14 +77,8 @@ type mlangListener interface {
 	// ExitStat is called when exiting the stat production.
 	ExitStat(c *StatContext)
 
-	// ExitArray is called when exiting the Array production.
-	ExitArray(c *ArrayContext)
-
 	// ExitDictionary is called when exiting the Dictionary production.
 	ExitDictionary(c *DictionaryContext)
-
-	// ExitNumber is called when exiting the Number production.
-	ExitNumber(c *NumberContext)
 
 	// ExitMulDiv is called when exiting the MulDiv production.
 	ExitMulDiv(c *MulDivContext)
@@ -95,11 +92,20 @@ type mlangListener interface {
 	// ExitCompareSymbol is called when exiting the CompareSymbol production.
 	ExitCompareSymbol(c *CompareSymbolContext)
 
-	// ExitFunctionCall is called when exiting the FunctionCall production.
-	ExitFunctionCall(c *FunctionCallContext)
-
 	// ExitString is called when exiting the String production.
 	ExitString(c *StringContext)
+
+	// ExitCompareFuncInfix is called when exiting the CompareFuncInfix production.
+	ExitCompareFuncInfix(c *CompareFuncInfixContext)
+
+	// ExitArray is called when exiting the Array production.
+	ExitArray(c *ArrayContext)
+
+	// ExitNumber is called when exiting the Number production.
+	ExitNumber(c *NumberContext)
+
+	// ExitFunctionCall is called when exiting the FunctionCall production.
+	ExitFunctionCall(c *FunctionCallContext)
 
 	// ExitId is called when exiting the Id production.
 	ExitId(c *IdContext)
@@ -107,8 +113,8 @@ type mlangListener interface {
 	// ExitBoolean is called when exiting the Boolean production.
 	ExitBoolean(c *BooleanContext)
 
-	// ExitCompareFuncInfix is called when exiting the CompareFuncInfix production.
-	ExitCompareFuncInfix(c *CompareFuncInfixContext)
+	// ExitFieldAccess is called when exiting the FieldAccess production.
+	ExitFieldAccess(c *FieldAccessContext)
 
 	// ExitExprList is called when exiting the exprList production.
 	ExitExprList(c *ExprListContext)

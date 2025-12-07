@@ -67,6 +67,17 @@ func (v *Variable) Type() semantic.Type { return v.ValueType }
 func (v *Variable) String() string      { return fmt.Sprintf("var(%s:%s)", v.Name, v.ValueType) }
 func (v *Variable) isExpr()             {}
 
+// Field access
+type FieldAccess struct {
+	Object    IRExpr
+	FieldName string
+	FieldType semantic.Type
+}
+
+func (f *FieldAccess) Type() semantic.Type { return f.FieldType }
+func (f *FieldAccess) String() string      { return fmt.Sprintf("field(%s.%s:%s)", f.Object, f.FieldName, f.FieldType) }
+func (f *FieldAccess) isExpr()             {}
+
 // Binary operation
 type BinaryOp struct {
 	Left       IRExpr

@@ -131,6 +131,8 @@ func (v *PureValidator) ValidateExpression(ctx parser.IExprContext) bool {
 		return v.validateCustomBinaryOp(expr)
 	case *parser.FunctionCallContext:
 		return v.validateFunctionCall(expr)
+	case *parser.FieldAccessContext:
+		return v.validateFieldAccess(expr)
 	default:
 		v.AddError(ctx, fmt.Sprintf("unsupported expression type: %T", expr))
 		return false
@@ -465,6 +467,35 @@ func (v *PureValidator) validateFunctionArguments(ctx *parser.FunctionCallContex
 	return valid
 }
 
+func (v *PureValidator) validateFieldAccess(ctx *parser.FieldAccessContext) bool {
+	// 验证左侧表达式
+	if !v.ValidateExpression(ctx.Expr()) {
+		return false
+	}
+	
+	// 获取左侧表达式的类型
+	leftType := v.inferExpressionType(ctx.Expr())
+	
+	// 检查是否为结构体类型
+	structType, ok := leftType.(*StructType)
+	if !ok {
+		v.AddError(ctx, fmt.Sprintf("field access on non-struct type: %s", leftType))
+		return false
+	}
+	
+	// 获取字段名
+	fieldName := ctx.ID().GetText()
+	
+	// 检查字段是否存在
+	_, exists := structType.GetFieldType(fieldName)
+	if !exists {
+		v.AddError(ctx, fmt.Sprintf("field '%s' does not exist in struct type '%s'", fieldName, structType.Name))
+		return false
+	}
+	
+	return true
+}
+
 // Helper methods
 
 func (v *PureValidator) inferExpressionType(ctx parser.IExprContext) Type {
@@ -530,6 +561,18 @@ func (v *PureValidator) inferExpressionType(ctx parser.IExprContext) Type {
 		if symbol, exists := v.symbolTable.Lookup(funcName); exists {
 			if funcType, ok := symbol.Type.(*FunctionType); ok {
 				return funcType.ReturnType
+			}
+		}
+		return AnyType
+	case *parser.FieldAccessContext:
+		// 获取左侧表达式的类型
+		leftType := v.inferExpressionType(expr.Expr())
+		
+		// 如果是结构体类型，返回字段类型
+		if structType, ok := leftType.(*StructType); ok {
+			fieldName := expr.ID().GetText()
+			if fieldType, exists := structType.GetFieldType(fieldName); exists {
+				return fieldType
 			}
 		}
 		return AnyType

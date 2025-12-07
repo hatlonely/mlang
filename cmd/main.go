@@ -47,6 +47,9 @@ func main() {
 	// Register some common variables for demo
 	registerCommonVariables(comp)
 	
+	// Register struct types and variables
+	registerStructTypes(comp)
+	
 	result := comp.CompileToGo(input)
 
 	// Handle errors
@@ -241,4 +244,25 @@ func registerCommonVariables(comp *compiler.Compiler) {
 	comp.RegisterVariable("userAge", semantic.IntType)
 	comp.RegisterVariable("userName", semantic.StringType)
 	comp.RegisterVariable("isActive", semantic.BooleanType)
+}
+
+func registerStructTypes(comp *compiler.Compiler) {
+	// Register User struct type
+	userFields := map[string]semantic.Type{
+		"id":   semantic.IntType,
+		"name": semantic.StringType,
+		"age":  semantic.IntType,
+	}
+	comp.RegisterStructType("User", userFields)
+	
+	// Register Point struct type
+	pointFields := map[string]semantic.Type{
+		"x": semantic.FloatType,
+		"y": semantic.FloatType,
+	}
+	comp.RegisterStructType("Point", pointFields)
+	
+	// Register some struct variables for demo
+	comp.RegisterStructVariable("user", "User")
+	comp.RegisterStructVariable("point", "Point")
 }

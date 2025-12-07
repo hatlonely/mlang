@@ -429,6 +429,31 @@ func (st *SymbolTable) RegisterVariable(name string, varType Type) error {
 	return st.globalScope.Define(name, varType)
 }
 
+// RegisterStructType 注册一个结构体类型
+func (st *SymbolTable) RegisterStructType(name string, fields map[string]Type) error {
+	structType := &StructType{
+		Name:   name,
+		Fields: fields,
+	}
+	return st.globalScope.Define(name, structType)
+}
+
+// RegisterStructVariable 注册一个结构体类型的变量
+func (st *SymbolTable) RegisterStructVariable(varName string, structTypeName string) error {
+	// 查找结构体类型
+	symbol, exists := st.globalScope.Lookup(structTypeName)
+	if !exists {
+		return errors.New("struct type not found: " + structTypeName)
+	}
+	
+	structType, ok := symbol.Type.(*StructType)
+	if !ok {
+		return errors.New(structTypeName + " is not a struct type")
+	}
+	
+	return st.globalScope.Define(varName, structType)
+}
+
 // ListFunctions 列出所有已注册的函数
 func (st *SymbolTable) ListFunctions() map[string]*FunctionType {
 	functions := make(map[string]*FunctionType)
@@ -438,4 +463,15 @@ func (st *SymbolTable) ListFunctions() map[string]*FunctionType {
 		}
 	}
 	return functions
+}
+
+// ListStructTypes 列出所有已注册的结构体类型
+func (st *SymbolTable) ListStructTypes() map[string]*StructType {
+	structs := make(map[string]*StructType)
+	for name, symbol := range st.globalScope.symbols {
+		if structType, ok := symbol.Type.(*StructType); ok {
+			structs[name] = structType
+		}
+	}
+	return structs
 }

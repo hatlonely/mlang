@@ -188,6 +188,44 @@ func (n *NumericType) IsCompatibleWith(other Type) bool {
 	return n.Equals(other)
 }
 
+// StructType represents struct types
+type StructType struct {
+	Name   string            // 结构体名称，如 "User", "Point" 等
+	Fields map[string]Type   // 字段名到类型的映射
+}
+
+func (s *StructType) String() string {
+	return s.Name
+}
+
+func (s *StructType) Equals(other Type) bool {
+	if o, ok := other.(*StructType); ok {
+		if s.Name != o.Name || len(s.Fields) != len(o.Fields) {
+			return false
+		}
+		for name, typ := range s.Fields {
+			if otherType, exists := o.Fields[name]; !exists || !typ.Equals(otherType) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func (s *StructType) IsCompatibleWith(other Type) bool {
+	if other.Equals(AnyType) {
+		return true
+	}
+	return s.Equals(other)
+}
+
+// GetFieldType 获取字段类型
+func (s *StructType) GetFieldType(fieldName string) (Type, bool) {
+	typ, exists := s.Fields[fieldName]
+	return typ, exists
+}
+
 // Predefined types
 var (
 	IntType     = &BasicType{"int"}

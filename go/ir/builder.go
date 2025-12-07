@@ -70,6 +70,8 @@ func (b *Builder) BuildExpression(ctx parser.IExprContext) IRExpr {
 		return b.buildCustomBinaryOp(expr)
 	case *parser.FunctionCallContext:
 		return b.buildFunctionCall(expr)
+	case *parser.FieldAccessContext:
+		return b.buildFieldAccess(expr)
 	default:
 		b.addError(ctx, fmt.Sprintf("unsupported expression type: %T", expr))
 		return &IntLiteral{Value: 0} // fallback
@@ -538,5 +540,36 @@ func (b *Builder) inferConcreteNumericType(args []IRExpr) semantic.Type {
 	
 	// 否则保持int
 	return semantic.IntType
+}
+
+func (b *Builder) buildFieldAccess(ctx *parser.FieldAccessContext) IRExpr {
+	// 构建左侧表达式（对象）
+	object := b.BuildExpression(ctx.Expr())
+	
+	// 获取字段名
+	fieldName := ctx.ID().GetText()
+	
+	// 获取对象类型
+	objectType := object.Type()
+	
+	// 确保是结构体类型
+	structType, ok := objectType.(*semantic.StructType)
+	if !ok {
+		b.addError(ctx, fmt.Sprintf("field access on non-struct type: %s", objectType))
+		return &IntLiteral{Value: 0} // fallback
+	}
+	
+	// 获取字段类型
+	fieldType, exists := structType.GetFieldType(fieldName)
+	if !exists {
+		b.addError(ctx, fmt.Sprintf("field '%s' does not exist in struct type '%s'", fieldName, structType.Name))
+		return &IntLiteral{Value: 0} // fallback
+	}
+	
+	return &FieldAccess{
+		Object:    object,
+		FieldName: fieldName,
+		FieldType: fieldType,
+	}
 }
 

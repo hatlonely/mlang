@@ -64,6 +64,9 @@ func (g *GoGenerator) generateExpression(expr ir.IRExpr) (string, error) {
 		
 	case *ir.DictLiteral:
 		return g.generateDictLiteral(e)
+	
+	case *ir.FieldAccess:
+		return g.generateFieldAccess(e)
 		
 	default:
 		return "", fmt.Errorf("unsupported expression type: %T", expr)
@@ -224,4 +227,14 @@ func (g *GoGenerator) generateGoType(t semantic.Type) string {
 	default:
 		return "interface{}"
 	}
+}
+
+func (g *GoGenerator) generateFieldAccess(field *ir.FieldAccess) (string, error) {
+	object, err := g.generateExpression(field.Object)
+	if err != nil {
+		return "", err
+	}
+	
+	// 生成字段访问代码: object.FieldName
+	return fmt.Sprintf("%s.%s", object, field.FieldName), nil
 }

@@ -99,6 +99,16 @@ func (c *Compiler) RegisterVariable(name string, varType semantic.Type) error {
 	return c.validator.RegisterVariable(name, varType)
 }
 
+// RegisterStructType registers a custom struct type
+func (c *Compiler) RegisterStructType(name string, fields map[string]semantic.Type) error {
+	return c.validator.GetSymbolTable().RegisterStructType(name, fields)
+}
+
+// RegisterStructVariable registers a struct variable
+func (c *Compiler) RegisterStructVariable(varName string, structTypeName string) error {
+	return c.validator.GetSymbolTable().RegisterStructVariable(varName, structTypeName)
+}
+
 // GetValidator returns the semantic validator (for advanced usage)
 func (c *Compiler) GetValidator() *semantic.PureValidator {
 	return c.validator
