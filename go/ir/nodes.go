@@ -78,6 +78,18 @@ func (f *FieldAccess) Type() semantic.Type { return f.FieldType }
 func (f *FieldAccess) String() string      { return fmt.Sprintf("field(%s.%s:%s)", f.Object, f.FieldName, f.FieldType) }
 func (f *FieldAccess) isExpr()             {}
 
+// Index access
+type IndexAccess struct {
+	Object     IRExpr
+	Index      IRExpr
+	ResultType semantic.Type
+	IndexCast  semantic.Type // nil if no cast needed
+}
+
+func (i *IndexAccess) Type() semantic.Type { return i.ResultType }
+func (i *IndexAccess) String() string      { return fmt.Sprintf("index(%s[%s]:%s)", i.Object, i.Index, i.ResultType) }
+func (i *IndexAccess) isExpr()             {}
+
 // Binary operation
 type BinaryOp struct {
 	Left       IRExpr

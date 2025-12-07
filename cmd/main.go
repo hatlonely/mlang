@@ -244,6 +244,16 @@ func registerCommonVariables(comp *compiler.Compiler) {
 	comp.RegisterVariable("userAge", semantic.IntType)
 	comp.RegisterVariable("userName", semantic.StringType)
 	comp.RegisterVariable("isActive", semantic.BooleanType)
+	
+	// Register array variables
+	comp.RegisterVariable("numbers", &semantic.ArrayType{ElementType: semantic.IntType})
+	comp.RegisterVariable("names", &semantic.ArrayType{ElementType: semantic.StringType})
+	comp.RegisterVariable("scores", &semantic.ArrayType{ElementType: semantic.FloatType})
+	
+	// Register map variables
+	comp.RegisterVariable("configs", &semantic.DictType{KeyType: semantic.StringType, ValueType: semantic.StringType})
+	comp.RegisterVariable("lookup", &semantic.DictType{KeyType: semantic.StringType, ValueType: semantic.IntType})
+	comp.RegisterVariable("weights", &semantic.DictType{KeyType: semantic.IntType, ValueType: semantic.FloatType})
 }
 
 func registerStructTypes(comp *compiler.Compiler) {
@@ -265,4 +275,15 @@ func registerStructTypes(comp *compiler.Compiler) {
 	// Register some struct variables for demo
 	comp.RegisterStructVariable("user", "User")
 	comp.RegisterStructVariable("point", "Point")
+	
+	// Register array of structs
+	userStructType := &semantic.StructType{
+		Name: "User",
+		Fields: map[string]semantic.Type{
+			"id":   semantic.IntType,
+			"name": semantic.StringType,
+			"age":  semantic.IntType,
+		},
+	}
+	comp.RegisterVariable("users", &semantic.ArrayType{ElementType: userStructType})
 }

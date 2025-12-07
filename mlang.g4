@@ -10,6 +10,7 @@ expr:
 	| expr op = ('+' | '-') expr								# AddSub
 	| expr op = ('>' | '<' | '>=' | '<=' | '==' | '!=') expr	# CompareSymbol
 	| expr binaryOp expr										# CompareFuncInfix
+	| expr '[' expr ']'											# IndexAccess
 	| expr DOT ID												# FieldAccess
 	| func '(' exprList? ')'									# FunctionCall
 	| '[' arrayElements? ']'									# Array

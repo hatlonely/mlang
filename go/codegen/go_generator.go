@@ -68,6 +68,9 @@ func (g *GoGenerator) generateExpression(expr ir.IRExpr) (string, error) {
 	case *ir.FieldAccess:
 		return g.generateFieldAccess(e)
 		
+	case *ir.IndexAccess:
+		return g.generateIndexAccess(e)
+		
 	default:
 		return "", fmt.Errorf("unsupported expression type: %T", expr)
 	}
@@ -237,4 +240,24 @@ func (g *GoGenerator) generateFieldAccess(field *ir.FieldAccess) (string, error)
 	
 	// 生成字段访问代码: object.FieldName
 	return fmt.Sprintf("%s.%s", object, field.FieldName), nil
+}
+
+func (g *GoGenerator) generateIndexAccess(index *ir.IndexAccess) (string, error) {
+	object, err := g.generateExpression(index.Object)
+	if err != nil {
+		return "", err
+	}
+	
+	indexExpr, err := g.generateExpression(index.Index)
+	if err != nil {
+		return "", err
+	}
+	
+	// 如果需要索引类型转换，应用转换
+	if index.IndexCast != nil {
+		indexExpr = g.generateCast(indexExpr, index.IndexCast)
+	}
+	
+	// 生成索引访问代码: object[index]
+	return fmt.Sprintf("%s[%s]", object, indexExpr), nil
 }

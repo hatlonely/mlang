@@ -133,6 +133,8 @@ func (v *PureValidator) ValidateExpression(ctx parser.IExprContext) bool {
 		return v.validateFunctionCall(expr)
 	case *parser.FieldAccessContext:
 		return v.validateFieldAccess(expr)
+	case *parser.IndexAccessContext:
+		return v.validateIndexAccess(expr)
 	default:
 		v.AddError(ctx, fmt.Sprintf("unsupported expression type: %T", expr))
 		return false
@@ -496,6 +498,43 @@ func (v *PureValidator) validateFieldAccess(ctx *parser.FieldAccessContext) bool
 	return true
 }
 
+func (v *PureValidator) validateIndexAccess(ctx *parser.IndexAccessContext) bool {
+	// 验证左侧表达式（被索引的对象）
+	if !v.ValidateExpression(ctx.Expr(0)) {
+		return false
+	}
+	
+	// 验证右侧表达式（索引）
+	if !v.ValidateExpression(ctx.Expr(1)) {
+		return false
+	}
+	
+	// 获取对象和索引的类型
+	objectType := v.inferExpressionType(ctx.Expr(0))
+	indexType := v.inferExpressionType(ctx.Expr(1))
+	
+	// 检查对象类型是否支持索引访问
+	switch objType := objectType.(type) {
+	case *ArrayType:
+		// 数组索引必须是整数
+		if !indexType.Equals(IntType) {
+			v.AddError(ctx.Expr(1), fmt.Sprintf("array index must be int, got %s", indexType))
+			return false
+		}
+		return true
+	case *DictType:
+		// 字典索引必须与键类型匹配
+		if !indexType.Equals(objType.KeyType) && !v.canImplicitlyCast(indexType, objType.KeyType) {
+			v.AddError(ctx.Expr(1), fmt.Sprintf("dictionary index type mismatch: expected %s, got %s", objType.KeyType, indexType))
+			return false
+		}
+		return true
+	default:
+		v.AddError(ctx.Expr(0), fmt.Sprintf("index access not supported on type %s", objectType))
+		return false
+	}
+}
+
 // Helper methods
 
 func (v *PureValidator) inferExpressionType(ctx parser.IExprContext) Type {
@@ -576,6 +615,19 @@ func (v *PureValidator) inferExpressionType(ctx parser.IExprContext) Type {
 			}
 		}
 		return AnyType
+	case *parser.IndexAccessContext:
+		// 获取被索引对象的类型
+		objectType := v.inferExpressionType(expr.Expr(0))
+		
+		// 根据对象类型推断索引访问的结果类型
+		switch objType := objectType.(type) {
+		case *ArrayType:
+			return objType.ElementType
+		case *DictType:
+			return objType.ValueType
+		default:
+			return AnyType
+		}
 	default:
 		return AnyType
 	}

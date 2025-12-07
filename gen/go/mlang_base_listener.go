@@ -57,6 +57,12 @@ func (s *BasemlangListener) EnterParens(ctx *ParensContext) {}
 // ExitParens is called when production Parens is exited.
 func (s *BasemlangListener) ExitParens(ctx *ParensContext) {}
 
+// EnterIndexAccess is called when production IndexAccess is entered.
+func (s *BasemlangListener) EnterIndexAccess(ctx *IndexAccessContext) {}
+
+// ExitIndexAccess is called when production IndexAccess is exited.
+func (s *BasemlangListener) ExitIndexAccess(ctx *IndexAccessContext) {}
+
 // EnterCompareSymbol is called when production CompareSymbol is entered.
 func (s *BasemlangListener) EnterCompareSymbol(ctx *CompareSymbolContext) {}
 

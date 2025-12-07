@@ -72,6 +72,8 @@ func (b *Builder) BuildExpression(ctx parser.IExprContext) IRExpr {
 		return b.buildFunctionCall(expr)
 	case *parser.FieldAccessContext:
 		return b.buildFieldAccess(expr)
+	case *parser.IndexAccessContext:
+		return b.buildIndexAccess(expr)
 	default:
 		b.addError(ctx, fmt.Sprintf("unsupported expression type: %T", expr))
 		return &IntLiteral{Value: 0} // fallback
@@ -570,6 +572,59 @@ func (b *Builder) buildFieldAccess(ctx *parser.FieldAccessContext) IRExpr {
 		Object:    object,
 		FieldName: fieldName,
 		FieldType: fieldType,
+	}
+}
+
+func (b *Builder) buildIndexAccess(ctx *parser.IndexAccessContext) IRExpr {
+	// 构建被索引的对象表达式
+	object := b.BuildExpression(ctx.Expr(0))
+	
+	// 构建索引表达式
+	index := b.BuildExpression(ctx.Expr(1))
+	
+	// 获取对象和索引的类型
+	objectType := object.Type()
+	indexType := index.Type()
+	
+	var resultType semantic.Type
+	var indexCast semantic.Type
+	
+	// 根据对象类型确定结果类型和可能的索引类型转换
+	switch objType := objectType.(type) {
+	case *semantic.ArrayType:
+		// 数组索引必须是整数
+		if !indexType.Equals(semantic.IntType) {
+			if b.canCastTo(indexType, semantic.IntType) {
+				indexCast = semantic.IntType
+			} else {
+				b.addError(ctx, fmt.Sprintf("array index must be int, got %s", indexType))
+				return &IntLiteral{Value: 0} // fallback
+			}
+		}
+		resultType = objType.ElementType
+		
+	case *semantic.DictType:
+		// 字典索引必须与键类型匹配
+		if !indexType.Equals(objType.KeyType) {
+			if b.canCastTo(indexType, objType.KeyType) {
+				indexCast = objType.KeyType
+			} else {
+				b.addError(ctx, fmt.Sprintf("dictionary index type mismatch: expected %s, got %s", objType.KeyType, indexType))
+				return &IntLiteral{Value: 0} // fallback
+			}
+		}
+		resultType = objType.ValueType
+		
+	default:
+		b.addError(ctx, fmt.Sprintf("index access not supported on type %s", objectType))
+		return &IntLiteral{Value: 0} // fallback
+	}
+	
+	return &IndexAccess{
+		Object:     object,
+		Index:      index,
+		ResultType: resultType,
+		IndexCast:  indexCast,
 	}
 }
 

@@ -26,6 +26,9 @@ type mlangListener interface {
 	// EnterParens is called when entering the Parens production.
 	EnterParens(c *ParensContext)
 
+	// EnterIndexAccess is called when entering the IndexAccess production.
+	EnterIndexAccess(c *IndexAccessContext)
+
 	// EnterCompareSymbol is called when entering the CompareSymbol production.
 	EnterCompareSymbol(c *CompareSymbolContext)
 
@@ -88,6 +91,9 @@ type mlangListener interface {
 
 	// ExitParens is called when exiting the Parens production.
 	ExitParens(c *ParensContext)
+
+	// ExitIndexAccess is called when exiting the IndexAccess production.
+	ExitIndexAccess(c *IndexAccessContext)
 
 	// ExitCompareSymbol is called when exiting the CompareSymbol production.
 	ExitCompareSymbol(c *CompareSymbolContext)
