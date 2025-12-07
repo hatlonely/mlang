@@ -31,6 +31,10 @@ func (b *BasicType) IsCompatibleWith(other Type) bool {
 	if n, ok := other.(*NumericType); ok && n.Name == "numeric" {
 		return b.Name == "int" || b.Name == "float"
 	}
+	// Any type is compatible with AnyType
+	if other.Equals(AnyType) {
+		return true
+	}
 	return b.Equals(other)
 }
 
@@ -51,6 +55,10 @@ func (a *ArrayType) Equals(other Type) bool {
 }
 
 func (a *ArrayType) IsCompatibleWith(other Type) bool {
+	// Any array type is compatible with AnyType
+	if other.Equals(AnyType) {
+		return true
+	}
 	return a.Equals(other)
 }
 
@@ -72,6 +80,10 @@ func (d *DictType) Equals(other Type) bool {
 }
 
 func (d *DictType) IsCompatibleWith(other Type) bool {
+	// Any dict type is compatible with AnyType
+	if other.Equals(AnyType) {
+		return true
+	}
 	return d.Equals(other)
 }
 

@@ -4,31 +4,41 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/antlr4-go/antlr/v4"
 	"github.com/hatlonely/mlang/go/semantic"
+	parser "github.com/hatlonely/mlang/gen/go"
 )
 
 func TestDemo(t *testing.T) {
 	fmt.Println("=== mlang 语义分析器演示 ===")
 
-	// 创建一个自定义分析器来演示注册功能
-	analyzer := semantic.NewAnalyzer()
+	// 创建一个自定义验证器来演示注册功能
+	validator := semantic.NewPureValidator()
 
 	// 注册自定义函数
 	fmt.Println("注册自定义函数:")
-	analyzer.RegisterFunction("sqrt", []semantic.Type{semantic.NumericBaseType}, semantic.NumericBaseType)
-	analyzer.RegisterFunction("isEmpty", []semantic.Type{semantic.AnyType}, semantic.BooleanType)
+	validator.RegisterFunction("sqrt", []semantic.Type{semantic.NumericBaseType}, semantic.NumericBaseType)
+	validator.RegisterFunction("isEmpty", []semantic.Type{semantic.AnyType}, semantic.BooleanType)
+	
+	// 注册之前的内置函数
+	validator.RegisterFunction("len", []semantic.Type{semantic.AnyType}, semantic.IntType)
+	validator.RegisterFunction("abs", []semantic.Type{semantic.NumericBaseType}, semantic.NumericBaseType)
+	validator.RegisterVariadicFunction("max", []semantic.Type{semantic.NumericBaseType}, semantic.NumericBaseType, semantic.NumericBaseType)
+	validator.RegisterVariadicFunction("min", []semantic.Type{semantic.NumericBaseType}, semantic.NumericBaseType, semantic.NumericBaseType)
+	validator.RegisterVariadicFunction("sum", []semantic.Type{}, semantic.NumericBaseType, semantic.NumericBaseType)
+	validator.RegisterVariadicFunction("concat", []semantic.Type{}, semantic.StringType, semantic.StringType)
 
 	// 注册可变参数函数
 	fmt.Println("注册可变参数函数:")
-	analyzer.RegisterVariadicFunction("add", []semantic.Type{}, semantic.NumericBaseType, semantic.NumericBaseType)
-	analyzer.RegisterVariadicFunction("multiply", []semantic.Type{semantic.NumericBaseType}, semantic.NumericBaseType, semantic.NumericBaseType) // 至少1个参数
+	validator.RegisterVariadicFunction("add", []semantic.Type{}, semantic.NumericBaseType, semantic.NumericBaseType)
+	validator.RegisterVariadicFunction("multiply", []semantic.Type{semantic.NumericBaseType}, semantic.NumericBaseType, semantic.NumericBaseType) // 至少1个参数
 
 	// 注册自定义比较运算符
-	analyzer.RegisterBinaryOp("contains", semantic.StringType, semantic.StringType, semantic.BooleanType)
-	analyzer.RegisterBinaryOp("startsWith", semantic.StringType, semantic.StringType, semantic.BooleanType)
+	validator.RegisterBinaryOp("contains", semantic.StringType, semantic.StringType, semantic.BooleanType)
+	validator.RegisterBinaryOp("startsWith", semantic.StringType, semantic.StringType, semantic.BooleanType)
 
 	// 列出所有注册的函数
-	functions := analyzer.ListFunctions()
+	functions := validator.GetSymbolTable().ListFunctions()
 	for name, funcType := range functions {
 		fmt.Printf("  %s: %s\n", name, funcType.String())
 	}
@@ -46,7 +56,7 @@ func TestDemo(t *testing.T) {
 		"len([1, 2, 3])",
 	}
 
-	runTestCases(basicTestCases, analyzer)
+	runTestCases(basicTestCases, validator)
 
 	fmt.Println("\n=== 内置可变参数函数测试 ===")
 	variadicTestCases := []string{
@@ -65,7 +75,7 @@ func TestDemo(t *testing.T) {
 		"concat(\"a\", 123)", // 混合类型错误
 	}
 
-	runTestCases(variadicTestCases, analyzer)
+	runTestCases(variadicTestCases, validator)
 
 	fmt.Println("\n=== 自定义可变参数函数测试 ===")
 	customVariadicTestCases := []string{
@@ -77,7 +87,7 @@ func TestDemo(t *testing.T) {
 		"add(1, \"2\")",     // 类型错误
 	}
 
-	runTestCases(customVariadicTestCases, analyzer)
+	runTestCases(customVariadicTestCases, validator)
 
 	fmt.Println("\n=== 固定参数函数测试 ===")
 	fixedFuncTestCases := []string{
@@ -90,7 +100,7 @@ func TestDemo(t *testing.T) {
 		"isEmpty(\"\")",
 	}
 
-	runTestCases(fixedFuncTestCases, analyzer)
+	runTestCases(fixedFuncTestCases, validator)
 
 	fmt.Println("\n=== 自定义比较运算符测试 ===")
 	customCompareTestCases := []string{
@@ -100,11 +110,11 @@ func TestDemo(t *testing.T) {
 		"42 startsWith \"4\"",    // 类型错误
 	}
 
-	runTestCases(customCompareTestCases, analyzer)
+	runTestCases(customCompareTestCases, validator)
 
 	fmt.Println("\n=== 可变参数函数管理演示 ===")
 	fmt.Println("注册一个更复杂的可变参数函数 (average):")
-	analyzer.RegisterVariadicFunction("average", []semantic.Type{}, semantic.NumericBaseType, semantic.NumericBaseType)
+	validator.RegisterVariadicFunction("average", []semantic.Type{}, semantic.NumericBaseType, semantic.NumericBaseType)
 
 	fmt.Println("测试 average 函数:")
 	averageTests := []string{
@@ -114,7 +124,7 @@ func TestDemo(t *testing.T) {
 		"average(1, 2, \"3\")", // 类型错误
 	}
 	for _, test := range averageTests {
-		errors, resultType := semantic.AnalyzeCodeWithAnalyzer(test, analyzer)
+		errors, resultType := analyzeCodeWithValidator(test, validator)
 		if len(errors) > 0 {
 			fmt.Printf("  %s -> 错误: %s\n", test, errors[0].Error())
 		} else {
@@ -123,25 +133,25 @@ func TestDemo(t *testing.T) {
 	}
 
 	fmt.Println("\n删除可变参数函数 add:")
-	analyzer.UnregisterFunction("add")
+	validator.GetSymbolTable().UnregisterFunction("add")
 
-	errors, _ := semantic.AnalyzeCodeWithAnalyzer("add(1, 2, 3)", analyzer)
+	errors, _ := analyzeCodeWithValidator("add(1, 2, 3)", validator)
 	if len(errors) > 0 {
 		fmt.Printf("  预期错误: %s\n", errors[0].Error())
 	}
 
 	fmt.Println("\n=== 最终函数列表 ===")
-	finalFunctions := analyzer.ListFunctions()
+	finalFunctions := validator.GetSymbolTable().ListFunctions()
 	for name, funcType := range finalFunctions {
 		fmt.Printf("  %s: %s\n", name, funcType.String())
 	}
 }
 
-func runTestCases(testCases []string, analyzer *semantic.Analyzer) {
+func runTestCases(testCases []string, validator *semantic.PureValidator) {
 	for i, testCase := range testCases {
 		fmt.Printf("\nTest %d: %s\n", i+1, testCase)
 
-		errors, resultType := semantic.AnalyzeCodeWithAnalyzer(testCase, analyzer)
+		errors, resultType := analyzeCodeWithValidator(testCase, validator)
 
 		if len(errors) > 0 {
 			fmt.Println("  语义错误:")
@@ -154,4 +164,34 @@ func runTestCases(testCases []string, analyzer *semantic.Analyzer) {
 
 		fmt.Printf("  结果类型: %s\n", resultType.String())
 	}
+}
+
+// Helper function to analyze code with PureValidator
+func analyzeCodeWithValidator(input string, validator *semantic.PureValidator) ([]*semantic.SemanticError, semantic.Type) {
+	lexer := parser.NewmlangLexer(antlr.NewInputStream(input))
+	stream := antlr.NewCommonTokenStream(lexer, 0)
+	p := parser.NewmlangParser(stream)
+
+	// Parse the input
+	tree := p.Prog()
+
+	// Clear previous errors
+	validator.ClearErrors()
+
+	// Validate with the provided validator
+	valid := validator.ValidateProgram(tree.(*parser.ProgContext))
+	if !valid {
+		return validator.GetErrors(), semantic.VoidType
+	}
+
+	// Get result type from last statement
+	progCtx := tree.(*parser.ProgContext)
+	var lastType semantic.Type = semantic.VoidType
+	for _, statCtx := range progCtx.AllStat() {
+		if exprCtx := statCtx.Expr(); exprCtx != nil {
+			lastType = validator.InferType(exprCtx)
+		}
+	}
+
+	return validator.GetErrors(), lastType
 }
