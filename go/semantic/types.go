@@ -138,6 +138,30 @@ func (f *FunctionType) IsCompatibleWith(other Type) bool {
 	return f.Equals(other)
 }
 
+// BinaryOpType represents binary operator types
+type BinaryOpType struct {
+	LeftType   Type
+	RightType  Type
+	ReturnType Type
+}
+
+func (b *BinaryOpType) String() string {
+	return fmt.Sprintf("(%s, %s) -> %s", b.LeftType.String(), b.RightType.String(), b.ReturnType.String())
+}
+
+func (b *BinaryOpType) Equals(other Type) bool {
+	if o, ok := other.(*BinaryOpType); ok {
+		return b.LeftType.Equals(o.LeftType) && 
+			   b.RightType.Equals(o.RightType) && 
+			   b.ReturnType.Equals(o.ReturnType)
+	}
+	return false
+}
+
+func (b *BinaryOpType) IsCompatibleWith(other Type) bool {
+	return b.Equals(other)
+}
+
 // NumericType represents the supertype for int and float
 type NumericType struct {
 	Name string

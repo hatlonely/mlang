@@ -334,38 +334,25 @@ func (v *PureValidator) validateCustomBinaryOp(ctx *parser.CompareFuncInfixConte
 		return false
 	}
 	
-	// Check if function exists
-	symbol, exists := v.symbolTable.Lookup(funcName)
-	if !exists {
-		v.AddError(ctx, "undefined binary operator function: "+funcName)
-		return false
-	}
-	
-	funcType, ok := symbol.Type.(*FunctionType)
-	if !ok {
-		v.AddError(ctx, funcName+" is not a function")
-		return false
-	}
-	
-	// Check parameter count
-	if len(funcType.ParamTypes) != 2 {
-		v.AddError(ctx, fmt.Sprintf("binary operator function %s must have exactly 2 parameters", funcName))
-		return false
-	}
-	
-	// Check parameter type compatibility
+	// Get argument types
 	leftType := v.inferExpressionType(ctx.Expr(0))
 	rightType := v.inferExpressionType(ctx.Expr(1))
 	
-	if !leftType.IsCompatibleWith(funcType.ParamTypes[0]) {
-		v.AddError(ctx.Expr(0), fmt.Sprintf("parameter type mismatch: expected %s, got %s", funcType.ParamTypes[0], leftType))
+	// Try to resolve binary operator overload
+	symbol, err := v.symbolTable.ResolveBinaryOpOverload(funcName, leftType, rightType)
+	if err != nil {
+		v.AddError(ctx, fmt.Sprintf("cannot resolve binary operator %s for types (%s, %s): %v", funcName, leftType, rightType, err))
 		return false
 	}
 	
-	if !rightType.IsCompatibleWith(funcType.ParamTypes[1]) {
-		v.AddError(ctx.Expr(1), fmt.Sprintf("parameter type mismatch: expected %s, got %s", funcType.ParamTypes[1], rightType))
+	binaryOpType, ok := symbol.Type.(*BinaryOpType)
+	if !ok {
+		v.AddError(ctx, funcName+" is not a binary operator")
 		return false
 	}
+	
+	// Store the resolved type for code generation
+	_ = binaryOpType // Use the resolved binary operator type
 	
 	return true
 }

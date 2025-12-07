@@ -297,10 +297,10 @@ func (b *Builder) buildCustomBinaryOp(ctx *parser.CompareFuncInfixContext) IRExp
 	left := b.BuildExpression(ctx.Expr(0))
 	right := b.BuildExpression(ctx.Expr(1))
 	
-	// Look up the function
-	symbol, exists := b.symbolTable.Lookup(funcName)
-	if !exists {
-		b.addError(ctx, "undefined binary operator function: "+funcName)
+	// Try to resolve binary operator overload
+	symbol, err := b.symbolTable.ResolveBinaryOpOverload(funcName, left.Type(), right.Type())
+	if err != nil {
+		b.addError(ctx, fmt.Sprintf("cannot resolve binary operator %s for types (%s, %s): %v", funcName, left.Type(), right.Type(), err))
 		return &BinaryOp{
 			Left:       left,
 			Right:      right,
@@ -309,9 +309,9 @@ func (b *Builder) buildCustomBinaryOp(ctx *parser.CompareFuncInfixContext) IRExp
 		}
 	}
 	
-	funcType, ok := symbol.Type.(*semantic.FunctionType)
+	binaryOpType, ok := symbol.Type.(*semantic.BinaryOpType)
 	if !ok {
-		b.addError(ctx, funcName+" is not a function")
+		b.addError(ctx, funcName+" is not a binary operator")
 		return &BinaryOp{
 			Left:       left,
 			Right:      right,
@@ -320,23 +320,13 @@ func (b *Builder) buildCustomBinaryOp(ctx *parser.CompareFuncInfixContext) IRExp
 		}
 	}
 	
-	// Determine necessary casts
-	var leftCast, rightCast semantic.Type
-	if len(funcType.ParamTypes) >= 2 {
-		if !left.Type().Equals(funcType.ParamTypes[0]) {
-			leftCast = funcType.ParamTypes[0]
-		}
-		if !right.Type().Equals(funcType.ParamTypes[1]) {
-			rightCast = funcType.ParamTypes[1]
-		}
-	}
-	
+	// No type casts needed - the overload resolution should have found an exact or compatible match
 	return &FunctionCall{
 		Name:       funcName,
 		Args:       []IRExpr{left, right},
-		ResultType: funcType.ReturnType,
-		ArgCasts:   []semantic.Type{leftCast, rightCast},
-		IsBuiltin:  false, // Custom binary ops are not built-in
+		ResultType: binaryOpType.ReturnType,
+		ArgCasts:   []semantic.Type{nil, nil}, // No casting
+		IsBuiltin:  false,
 		IsVariadic: false,
 	}
 }

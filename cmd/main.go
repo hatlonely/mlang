@@ -177,6 +177,47 @@ func registerCommonFunctions(comp *compiler.Compiler) {
 	comp.RegisterBinaryOp("startsWith", semantic.StringType, semantic.StringType, semantic.BooleanType)
 	comp.RegisterBinaryOp("endsWith", semantic.StringType, semantic.StringType, semantic.BooleanType)
 	
+	// Register comparison operators for numbers
+	comp.RegisterBinaryOp("gt", semantic.IntType, semantic.IntType, semantic.BooleanType)
+	comp.RegisterBinaryOp("gt", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("gt", semantic.IntType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("gt", semantic.FloatType, semantic.IntType, semantic.BooleanType)
+	
+	comp.RegisterBinaryOp("lt", semantic.IntType, semantic.IntType, semantic.BooleanType)
+	comp.RegisterBinaryOp("lt", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("lt", semantic.IntType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("lt", semantic.FloatType, semantic.IntType, semantic.BooleanType)
+	
+	comp.RegisterBinaryOp("ge", semantic.IntType, semantic.IntType, semantic.BooleanType)
+	comp.RegisterBinaryOp("ge", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("ge", semantic.IntType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("ge", semantic.FloatType, semantic.IntType, semantic.BooleanType)
+	
+	comp.RegisterBinaryOp("le", semantic.IntType, semantic.IntType, semantic.BooleanType)
+	comp.RegisterBinaryOp("le", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("le", semantic.IntType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("le", semantic.FloatType, semantic.IntType, semantic.BooleanType)
+	
+	comp.RegisterBinaryOp("eq", semantic.IntType, semantic.IntType, semantic.BooleanType)
+	comp.RegisterBinaryOp("eq", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("eq", semantic.IntType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("eq", semantic.FloatType, semantic.IntType, semantic.BooleanType)
+	comp.RegisterBinaryOp("eq", semantic.StringType, semantic.StringType, semantic.BooleanType)
+	comp.RegisterBinaryOp("eq", semantic.BooleanType, semantic.BooleanType, semantic.BooleanType)
+	
+	comp.RegisterBinaryOp("ne", semantic.IntType, semantic.IntType, semantic.BooleanType)
+	comp.RegisterBinaryOp("ne", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("ne", semantic.IntType, semantic.FloatType, semantic.BooleanType)
+	comp.RegisterBinaryOp("ne", semantic.FloatType, semantic.IntType, semantic.BooleanType)
+	comp.RegisterBinaryOp("ne", semantic.StringType, semantic.StringType, semantic.BooleanType)
+	comp.RegisterBinaryOp("ne", semantic.BooleanType, semantic.BooleanType, semantic.BooleanType)
+	
+	// Register string comparison operators
+	comp.RegisterBinaryOp("gt", semantic.StringType, semantic.StringType, semantic.BooleanType)
+	comp.RegisterBinaryOp("lt", semantic.StringType, semantic.StringType, semantic.BooleanType)
+	comp.RegisterBinaryOp("ge", semantic.StringType, semantic.StringType, semantic.BooleanType)
+	comp.RegisterBinaryOp("le", semantic.StringType, semantic.StringType, semantic.BooleanType)
+	
 	// Register utility functions
 	comp.RegisterFunction("isEmpty", []semantic.Type{semantic.AnyType}, semantic.BooleanType)
 	comp.RegisterFunction("toString", []semantic.Type{semantic.AnyType}, semantic.StringType)

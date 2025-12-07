@@ -13,6 +13,8 @@ type Scope struct {
 	symbols map[string]*Symbol
 	// 支持函数重载：函数名 -> 重载列表
 	functionOverloads map[string][]*Symbol
+	// 支持 binaryOp 重载：运算符名 -> 重载列表
+	binaryOpOverloads map[string][]*Symbol
 	parent           *Scope
 }
 
@@ -20,6 +22,7 @@ func NewScope(parent *Scope) *Scope {
 	return &Scope{
 		symbols:           make(map[string]*Symbol),
 		functionOverloads: make(map[string][]*Symbol),
+		binaryOpOverloads: make(map[string][]*Symbol),
 		parent:            parent,
 	}
 }
@@ -85,6 +88,54 @@ func (s *Scope) LookupFunctionOverloads(name string) ([]*Symbol, bool) {
 	return nil, false
 }
 
+// DefineBinaryOp 定义一个新的 binary operator 重载
+func (s *Scope) DefineBinaryOp(name string, binaryOpType *BinaryOpType) error {
+	symbol := &Symbol{
+		Name: name,
+		Type: binaryOpType,
+	}
+	
+	// 检查是否已存在相同签名的重载
+	if overloads, exists := s.binaryOpOverloads[name]; exists {
+		for _, existing := range overloads {
+			if existingBinOp, ok := existing.Type.(*BinaryOpType); ok {
+				if binaryOpSignatureEqual(binaryOpType, existingBinOp) {
+					return errors.New("binary operator with same signature already defined: " + name)
+				}
+			}
+		}
+		s.binaryOpOverloads[name] = append(s.binaryOpOverloads[name], symbol)
+	} else {
+		s.binaryOpOverloads[name] = []*Symbol{symbol}
+	}
+	
+	// 如果这是第一个重载，也在普通符号表中注册（向后兼容）
+	if len(s.binaryOpOverloads[name]) == 1 {
+		// 为了向后兼容，也创建一个 FunctionType 表示
+		funcType := &FunctionType{
+			ParamTypes: []Type{binaryOpType.LeftType, binaryOpType.RightType},
+			ReturnType: binaryOpType.ReturnType,
+		}
+		s.symbols[name] = &Symbol{
+			Name: name,
+			Type: funcType,
+		}
+	}
+	
+	return nil
+}
+
+// LookupBinaryOpOverloads 查找 binary operator 的所有重载
+func (s *Scope) LookupBinaryOpOverloads(name string) ([]*Symbol, bool) {
+	if overloads, exists := s.binaryOpOverloads[name]; exists {
+		return overloads, true
+	}
+	if s.parent != nil {
+		return s.parent.LookupBinaryOpOverloads(name)
+	}
+	return nil, false
+}
+
 // functionsSignatureEqual 检查两个函数签名是否相等
 func functionsSignatureEqual(f1, f2 *FunctionType) bool {
 	if len(f1.ParamTypes) != len(f2.ParamTypes) {
@@ -105,6 +156,13 @@ func functionsSignatureEqual(f1, f2 *FunctionType) bool {
 	}
 	
 	return true
+}
+
+// binaryOpSignatureEqual 检查两个 binary operator 签名是否相等
+func binaryOpSignatureEqual(b1, b2 *BinaryOpType) bool {
+	return b1.LeftType.Equals(b2.LeftType) && 
+		   b1.RightType.Equals(b2.RightType) && 
+		   b1.ReturnType.Equals(b2.ReturnType)
 }
 
 // SymbolTable manages symbol scopes
@@ -168,16 +226,22 @@ func (st *SymbolTable) RegisterVariadicFunction(name string, paramTypes []Type, 
 
 // RegisterBinaryOp 注册一个比较运算符函数
 func (st *SymbolTable) RegisterBinaryOp(name string, leftType, rightType, returnType Type) error {
-	funcType := &FunctionType{
-		ParamTypes: []Type{leftType, rightType},
+	binaryOpType := &BinaryOpType{
+		LeftType:   leftType,
+		RightType:  rightType,
 		ReturnType: returnType,
 	}
-	return st.globalScope.Define(name, funcType)
+	return st.globalScope.DefineBinaryOp(name, binaryOpType)
 }
 
 // LookupFunctionOverloads 查找函数的所有重载
 func (st *SymbolTable) LookupFunctionOverloads(name string) ([]*Symbol, bool) {
 	return st.globalScope.LookupFunctionOverloads(name)
+}
+
+// LookupBinaryOpOverloads 查找 binaryOp 的所有重载
+func (st *SymbolTable) LookupBinaryOpOverloads(name string) ([]*Symbol, bool) {
+	return st.globalScope.LookupBinaryOpOverloads(name)
 }
 
 // ResolveFunctionOverload 根据参数类型解析最佳的函数重载
@@ -277,6 +341,61 @@ func (st *SymbolTable) canUnifyToType(argTypes []Type, targetType Type) bool {
 		}
 	}
 	return true
+}
+
+// ResolveBinaryOpOverload 根据参数类型解析最佳的 binaryOp 重载
+func (st *SymbolTable) ResolveBinaryOpOverload(name string, leftType, rightType Type) (*Symbol, error) {
+	overloads, exists := st.LookupBinaryOpOverloads(name)
+	if !exists {
+		return nil, errors.New("binary operator not found: " + name)
+	}
+	
+	var bestMatch *Symbol
+	var bestScore int = -1
+	
+	for _, overload := range overloads {
+		binaryOpType, ok := overload.Type.(*BinaryOpType)
+		if !ok {
+			continue
+		}
+		
+		score := st.calculateBinaryOpMatchScore(binaryOpType, leftType, rightType)
+		if score > bestScore {
+			bestScore = score
+			bestMatch = overload
+		}
+	}
+	
+	if bestMatch == nil {
+		return nil, errors.New("no matching overload found for binary operator: " + name)
+	}
+	
+	return bestMatch, nil
+}
+
+// calculateBinaryOpMatchScore 计算 binaryOp 签名与参数类型的匹配分数
+func (st *SymbolTable) calculateBinaryOpMatchScore(binaryOpType *BinaryOpType, leftType, rightType Type) int {
+	score := 0
+	
+	// 计算左操作数的匹配分数
+	if leftType.Equals(binaryOpType.LeftType) {
+		score += 100 // 完全匹配
+	} else if st.canImplicitlyCast(leftType, binaryOpType.LeftType) {
+		score += 50 // 可以隐式转换
+	} else {
+		return -1 // 不兼容
+	}
+	
+	// 计算右操作数的匹配分数
+	if rightType.Equals(binaryOpType.RightType) {
+		score += 100 // 完全匹配
+	} else if st.canImplicitlyCast(rightType, binaryOpType.RightType) {
+		score += 50 // 可以隐式转换
+	} else {
+		return -1 // 不兼容
+	}
+	
+	return score
 }
 
 // canImplicitlyCast 检查是否可以进行隐式类型转换
