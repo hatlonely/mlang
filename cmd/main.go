@@ -270,9 +270,33 @@ func registerStructTypes(comp *compiler.Compiler) {
 	}
 	comp.RegisterStructType("Point", pointFields)
 
+	// Register Address struct type
+	addressFields := map[string]semantic.Type{
+		"street": semantic.StringType,
+		"city":   semantic.StringType,
+		"zip":    semantic.StringType,
+	}
+	comp.RegisterStructType("Address", addressFields)
+
+	// Try to register nested struct - Company with Address field
+	addressStructType := &semantic.StructType{
+		Name: "Address",
+		Fields: map[string]semantic.Type{
+			"street": semantic.StringType,
+			"city":   semantic.StringType,
+			"zip":    semantic.StringType,
+		},
+	}
+	companyFields := map[string]semantic.Type{
+		"name":    semantic.StringType,
+		"address": addressStructType, // 嵌套结构体字段
+	}
+	comp.RegisterStructType("Company", companyFields)
+
 	// Register some struct variables for demo
 	comp.RegisterStructVariable("user", "User")
 	comp.RegisterStructVariable("point", "Point")
+	comp.RegisterStructVariable("company", "Company")
 
 	// Register array of structs
 	userStructType := &semantic.StructType{
