@@ -294,6 +294,16 @@ func (s *ProgContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *ProgContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitProg(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *mlangParser) Prog() (localctx IProgContext) {
 	localctx = NewProgContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 0, mlangParserRULE_prog)
@@ -426,6 +436,16 @@ func (s *StatContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *StatContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
 		listenerT.ExitStat(s)
+	}
+}
+
+func (s *StatContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitStat(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -591,6 +611,16 @@ func (s *DictionaryContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *DictionaryContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitDictionary(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 type MulDivContext struct {
 	ExprContext
 	op antlr.Token
@@ -664,6 +694,16 @@ func (s *MulDivContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *MulDivContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
 		listenerT.ExitMulDiv(s)
+	}
+}
+
+func (s *MulDivContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitMulDiv(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -743,6 +783,16 @@ func (s *AddSubContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *AddSubContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitAddSub(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 type ParensContext struct {
 	ExprContext
 }
@@ -786,6 +836,16 @@ func (s *ParensContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *ParensContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
 		listenerT.ExitParens(s)
+	}
+}
+
+func (s *ParensContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitParens(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -857,6 +917,16 @@ func (s *IndexAccessContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *IndexAccessContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
 		listenerT.ExitIndexAccess(s)
+	}
+}
+
+func (s *IndexAccessContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitIndexAccess(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -936,6 +1006,16 @@ func (s *CompareSymbolContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *CompareSymbolContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitCompareSymbol(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 type StringContext struct {
 	ExprContext
 }
@@ -967,6 +1047,16 @@ func (s *StringContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *StringContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
 		listenerT.ExitString(s)
+	}
+}
+
+func (s *StringContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitString(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -1057,6 +1147,16 @@ func (s *CompareFuncInfixContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *CompareFuncInfixContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitCompareFuncInfix(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 type ArrayContext struct {
 	ExprContext
 }
@@ -1100,6 +1200,16 @@ func (s *ArrayContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *ArrayContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
 		listenerT.ExitArray(s)
+	}
+}
+
+func (s *ArrayContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitArray(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -1190,6 +1300,16 @@ func (s *NotCompareFuncInfixContext) ExitRule(listener antlr.ParseTreeListener) 
 	}
 }
 
+func (s *NotCompareFuncInfixContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitNotCompareFuncInfix(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 type NumberContext struct {
 	ExprContext
 }
@@ -1221,6 +1341,16 @@ func (s *NumberContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *NumberContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
 		listenerT.ExitNumber(s)
+	}
+}
+
+func (s *NumberContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitNumber(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -1286,6 +1416,16 @@ func (s *FunctionCallContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *FunctionCallContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitFunctionCall(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 type IdContext struct {
 	ExprContext
 }
@@ -1320,6 +1460,16 @@ func (s *IdContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *IdContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitId(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 type BooleanContext struct {
 	ExprContext
 }
@@ -1351,6 +1501,16 @@ func (s *BooleanContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *BooleanContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
 		listenerT.ExitBoolean(s)
+	}
+}
+
+func (s *BooleanContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitBoolean(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -1405,6 +1565,16 @@ func (s *FieldAccessContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *FieldAccessContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
 		listenerT.ExitFieldAccess(s)
+	}
+}
+
+func (s *FieldAccessContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitFieldAccess(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -1982,6 +2152,16 @@ func (s *ExprListContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *ExprListContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitExprList(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *mlangParser) ExprList() (localctx IExprListContext) {
 	localctx = NewExprListContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 6, mlangParserRULE_exprList)
@@ -2139,6 +2319,16 @@ func (s *ArrayElementsContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *ArrayElementsContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
 		listenerT.ExitArrayElements(s)
+	}
+}
+
+func (s *ArrayElementsContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitArrayElements(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -2302,6 +2492,16 @@ func (s *DictElementsContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *DictElementsContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitDictElements(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *mlangParser) DictElements() (localctx IDictElementsContext) {
 	localctx = NewDictElementsContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 10, mlangParserRULE_dictElements)
@@ -2462,6 +2662,16 @@ func (s *DictPairContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *DictPairContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitDictPair(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *mlangParser) DictPair() (localctx IDictPairContext) {
 	localctx = NewDictPairContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 12, mlangParserRULE_dictPair)
@@ -2566,6 +2776,16 @@ func (s *BinaryOpContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *BinaryOpContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitBinaryOp(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *mlangParser) BinaryOp() (localctx IBinaryOpContext) {
 	localctx = NewBinaryOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 14, mlangParserRULE_binaryOp)
@@ -2659,6 +2879,16 @@ func (s *FuncContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *FuncContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(mlangListener); ok {
 		listenerT.ExitFunc(s)
+	}
+}
+
+func (s *FuncContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case mlangVisitor:
+		return t.VisitFunc(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 

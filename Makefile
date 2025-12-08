@@ -20,7 +20,7 @@ $(PYTHON_OUTPUT_DIR)/mlangLexer.py $(PYTHON_OUTPUT_DIR)/mlangParser.py: $(GRAMMA
 golang: $(GOLANG_OUTPUT_DIR)/mlang_lexer.go $(GOLANG_OUTPUT_DIR)/mlang_parser.go
 
 $(GOLANG_OUTPUT_DIR)/mlang_lexer.go $(GOLANG_OUTPUT_DIR)/mlang_parser.go: $(GRAMMAR_FILE) | $(GOLANG_OUTPUT_DIR)
-	$(ANTLR) -Dlanguage=Go -o $(GOLANG_OUTPUT_DIR) $(GRAMMAR_FILE)
+	$(ANTLR) -Dlanguage=Go -visitor -o $(GOLANG_OUTPUT_DIR) $(GRAMMAR_FILE)
 
 # Create output directories if they don't exist
 $(PYTHON_OUTPUT_DIR):
