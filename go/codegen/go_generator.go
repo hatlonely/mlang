@@ -119,6 +119,12 @@ func (g *GoGenerator) generateBinaryOp(op *ir.BinaryOp) (string, error) {
 		result = fmt.Sprintf("(%s > %s)", left, right)
 	case ir.OpGE:
 		result = fmt.Sprintf("(%s >= %s)", left, right)
+	case ir.OpOr:
+		// || 运算符需要短路求值: 如果左侧不为零值，返回左侧，否则返回右侧
+		result = g.generateOrExpression(left, right, op.ResultType)
+	case ir.OpAnd:
+		// && 运算符需要短路求值: 如果左侧为零值，返回右值的零值，否则返回右值
+		result = g.generateAndExpression(left, right, op.ResultType, op.Left.Type())
 	case ir.OpCustom:
 		// Custom binary operators are generated as function calls
 		if op.OpName == "" {
@@ -274,4 +280,110 @@ func (g *GoGenerator) generateIndexAccess(index *ir.IndexAccess) (string, error)
 	
 	// 生成索引访问代码: object[index]
 	return fmt.Sprintf("%s[%s]", object, indexExpr), nil
+}
+
+// generateOrExpression 生成 || 运算符的短路求值表达式
+func (g *GoGenerator) generateOrExpression(left, right string, resultType semantic.Type) string {
+	// 根据结果类型生成不同的零值检查和短路逻辑
+	switch typ := resultType.(type) {
+	case *semantic.BasicType:
+		switch typ.Name {
+		case "int":
+			return fmt.Sprintf("(func() int { if _left := %s; _left != 0 { return _left } else { return %s } })()", left, right)
+		case "float":
+			return fmt.Sprintf("(func() float64 { if _left := %s; _left != 0.0 { return _left } else { return %s } })()", left, right)
+		case "string":
+			return fmt.Sprintf("(func() string { if _left := %s; _left != \"\" { return _left } else { return %s } })()", left, right)
+		case "boolean":
+			// 对于布尔类型，直接使用Go的||运算符，它本身就支持短路求值
+			return fmt.Sprintf("(%s || %s)", left, right)
+		default:
+			// 对于其他类型，使用interface{}和反射判断
+			return fmt.Sprintf("(func() interface{} { if _left := %s; !isZeroValue(_left) { return _left } else { return %s } })()", left, right)
+		}
+	case *semantic.ArrayType:
+		// 数组的零值是nil或长度为0
+		elemType := g.generateGoType(typ.ElementType)
+		return fmt.Sprintf("(func() []%s { if _left := %s; _left != nil && len(_left) > 0 { return _left } else { return %s } })()", elemType, left, right)
+	case *semantic.DictType:
+		// 字典的零值是nil或长度为0
+		keyType := g.generateGoType(typ.KeyType)
+		valueType := g.generateGoType(typ.ValueType)
+		return fmt.Sprintf("(func() map[%s]%s { if _left := %s; _left != nil && len(_left) > 0 { return _left } else { return %s } })()", keyType, valueType, left, right)
+	default:
+		// 默认情况，使用interface{}
+		return fmt.Sprintf("(func() interface{} { if _left := %s; !isZeroValue(_left) { return _left } else { return %s } })()", left, right)
+	}
+}
+
+// generateAndExpression 生成 && 运算符的短路求值表达式
+func (g *GoGenerator) generateAndExpression(left, right string, resultType semantic.Type, leftType semantic.Type) string {
+	// 特殊优化：当左右操作数都是布尔类型时，直接使用Go的原生&&运算符
+	if leftTyp, ok := leftType.(*semantic.BasicType); ok && leftTyp.Name == "boolean" {
+		if resultTyp, ok := resultType.(*semantic.BasicType); ok && resultTyp.Name == "boolean" {
+			return fmt.Sprintf("(%s && %s)", left, right)
+		}
+	}
+	
+	zeroValue := g.generateZeroValue(resultType)
+	goType := g.generateGoType(resultType)
+	
+	// 关键：零值检查应该基于左操作数的类型，而不是结果类型
+	var zeroCheck string
+	switch leftTyp := leftType.(type) {
+	case *semantic.BasicType:
+		switch leftTyp.Name {
+		case "int":
+			zeroCheck = "_left == 0"
+		case "float":
+			zeroCheck = "_left == 0.0"
+		case "string":
+			zeroCheck = `_left == ""`
+		case "boolean":
+			zeroCheck = "!_left"
+		default:
+			// 对于未知的基础类型，使用接口检查
+			zeroCheck = fmt.Sprintf("_left == nil || _left == %s", g.generateZeroValue(leftType))
+		}
+	case *semantic.ArrayType:
+		zeroCheck = "_left == nil || len(_left) == 0"
+	case *semantic.DictType:
+		zeroCheck = "_left == nil || len(_left) == 0"
+	default:
+		// 对于复杂类型，使用接口检查
+		zeroCheck = "_left == nil"
+	}
+	
+	return fmt.Sprintf("(func() %s { if _left := %s; %s { return %s } else { return %s } })()", goType, left, zeroCheck, zeroValue, right)
+}
+
+// generateZeroValue 生成指定类型的零值
+func (g *GoGenerator) generateZeroValue(t semantic.Type) string {
+	switch typ := t.(type) {
+	case *semantic.BasicType:
+		switch typ.Name {
+		case "int":
+			return "0"
+		case "float":
+			return "0.0"
+		case "string":
+			return `""`
+		case "boolean":
+			return "false"
+		default:
+			return "nil"
+		}
+	case *semantic.ArrayType:
+		elemType := g.generateGoType(typ.ElementType)
+		return fmt.Sprintf("[]%s{}", elemType)
+	case *semantic.DictType:
+		keyType := g.generateGoType(typ.KeyType)
+		valueType := g.generateGoType(typ.ValueType)
+		return fmt.Sprintf("map[%s]%s{}", keyType, valueType)
+	case *semantic.StructType:
+		// 结构体零值需要类型信息，这里返回nil
+		return "nil"
+	default:
+		return "nil"
+	}
 }

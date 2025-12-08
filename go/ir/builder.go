@@ -64,8 +64,14 @@ func (b *Builder) BuildExpression(ctx parser.IExprContext) IRExpr {
 		return b.buildBinaryOp(expr.Expr(0), expr.Expr(1), expr.GetOp().GetText())
 	case *parser.AddSubContext:
 		return b.buildBinaryOp(expr.Expr(0), expr.Expr(1), expr.GetOp().GetText())
-	case *parser.CompareSymbolContext:
+	case *parser.EqualitySymbolContext:
 		return b.buildBinaryOp(expr.Expr(0), expr.Expr(1), expr.GetOp().GetText())
+	case *parser.RelationalSymbolContext:
+		return b.buildBinaryOp(expr.Expr(0), expr.Expr(1), expr.GetOp().GetText())
+	case *parser.OrOpContext:
+		return b.buildOrOp(expr)
+	case *parser.AndOpContext:
+		return b.buildAndOp(expr)
 	case *parser.CompareFuncInfixContext:
 		return b.buildCustomBinaryOp(expr)
 	case *parser.NotCompareFuncInfixContext:
@@ -683,6 +689,75 @@ func (b *Builder) buildIndexAccess(ctx *parser.IndexAccessContext) IRExpr {
 		Index:      index,
 		ResultType: resultType,
 		IndexCast:  indexCast,
+	}
+}
+
+func (b *Builder) buildOrOp(ctx *parser.OrOpContext) IRExpr {
+	left := b.BuildExpression(ctx.Expr(0))
+	right := b.BuildExpression(ctx.Expr(1))
+	
+	leftType := left.Type()
+	rightType := right.Type()
+	
+	// 确定结果类型和必要的类型转换
+	var resultType semantic.Type
+	var leftCast, rightCast semantic.Type
+	
+	// || 运算符的类型规则:
+	// 1. 相同类型: 返回该类型
+	// 2. 数值类型: 返回更宽的类型 (int || float -> float)
+	// 3. 其他兼容类型: 返回左侧类型（短路求值的特性）
+	
+	if leftType.Equals(rightType) {
+		resultType = leftType
+	} else if b.isNumericType(leftType) && b.isNumericType(rightType) {
+		// 数值类型提升
+		resultType = b.promoteNumericTypes(leftType, rightType)
+		if resultType != nil {
+			if !leftType.Equals(resultType) {
+				leftCast = resultType
+			}
+			if !rightType.Equals(resultType) {
+				rightCast = resultType
+			}
+		} else {
+			resultType = leftType // fallback 到左侧类型
+		}
+	} else {
+		// 对于其他类型，返回左侧类型
+		// 在短路求值中，如果左侧非零值，直接返回左侧值
+		resultType = leftType
+	}
+	
+	return &BinaryOp{
+		Left:       left,
+		Right:      right,
+		Op:         OpOr,
+		ResultType: resultType,
+		LeftCast:   leftCast,
+		RightCast:  rightCast,
+	}
+}
+
+func (b *Builder) buildAndOp(ctx *parser.AndOpContext) IRExpr {
+	left := b.BuildExpression(ctx.Expr(0))
+	right := b.BuildExpression(ctx.Expr(1))
+	
+	// && 运算符的宽泛语义：
+	// - 结果类型始终是右操作数的类型
+	// - 不要求左右操作数类型兼容
+	// - 如果左值为零值，返回右值的零值；否则返回右值
+	
+	resultType := right.Type()
+	
+	return &BinaryOp{
+		Left:       left,
+		Right:      right,
+		Op:         OpAnd,
+		ResultType: resultType,
+		// 不需要类型转换，因为不要求类型兼容
+		LeftCast:   nil,
+		RightCast:  nil,
 	}
 }
 

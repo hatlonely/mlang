@@ -17,6 +17,12 @@ type mlangListener interface {
 	// EnterDictionary is called when entering the Dictionary production.
 	EnterDictionary(c *DictionaryContext)
 
+	// EnterOrOp is called when entering the OrOp production.
+	EnterOrOp(c *OrOpContext)
+
+	// EnterRelationalSymbol is called when entering the RelationalSymbol production.
+	EnterRelationalSymbol(c *RelationalSymbolContext)
+
 	// EnterMulDiv is called when entering the MulDiv production.
 	EnterMulDiv(c *MulDivContext)
 
@@ -29,8 +35,8 @@ type mlangListener interface {
 	// EnterIndexAccess is called when entering the IndexAccess production.
 	EnterIndexAccess(c *IndexAccessContext)
 
-	// EnterCompareSymbol is called when entering the CompareSymbol production.
-	EnterCompareSymbol(c *CompareSymbolContext)
+	// EnterEqualitySymbol is called when entering the EqualitySymbol production.
+	EnterEqualitySymbol(c *EqualitySymbolContext)
 
 	// EnterString is called when entering the String production.
 	EnterString(c *StringContext)
@@ -59,6 +65,9 @@ type mlangListener interface {
 	// EnterFieldAccess is called when entering the FieldAccess production.
 	EnterFieldAccess(c *FieldAccessContext)
 
+	// EnterAndOp is called when entering the AndOp production.
+	EnterAndOp(c *AndOpContext)
+
 	// EnterExprList is called when entering the exprList production.
 	EnterExprList(c *ExprListContext)
 
@@ -86,6 +95,12 @@ type mlangListener interface {
 	// ExitDictionary is called when exiting the Dictionary production.
 	ExitDictionary(c *DictionaryContext)
 
+	// ExitOrOp is called when exiting the OrOp production.
+	ExitOrOp(c *OrOpContext)
+
+	// ExitRelationalSymbol is called when exiting the RelationalSymbol production.
+	ExitRelationalSymbol(c *RelationalSymbolContext)
+
 	// ExitMulDiv is called when exiting the MulDiv production.
 	ExitMulDiv(c *MulDivContext)
 
@@ -98,8 +113,8 @@ type mlangListener interface {
 	// ExitIndexAccess is called when exiting the IndexAccess production.
 	ExitIndexAccess(c *IndexAccessContext)
 
-	// ExitCompareSymbol is called when exiting the CompareSymbol production.
-	ExitCompareSymbol(c *CompareSymbolContext)
+	// ExitEqualitySymbol is called when exiting the EqualitySymbol production.
+	ExitEqualitySymbol(c *EqualitySymbolContext)
 
 	// ExitString is called when exiting the String production.
 	ExitString(c *StringContext)
@@ -127,6 +142,9 @@ type mlangListener interface {
 
 	// ExitFieldAccess is called when exiting the FieldAccess production.
 	ExitFieldAccess(c *FieldAccessContext)
+
+	// ExitAndOp is called when exiting the AndOp production.
+	ExitAndOp(c *AndOpContext)
 
 	// ExitExprList is called when exiting the exprList production.
 	ExitExprList(c *ExprListContext)

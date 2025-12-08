@@ -125,8 +125,14 @@ func (v *PureValidator) ValidateExpression(ctx parser.IExprContext) bool {
 		return v.validateBinaryOperation(expr.Expr(0), expr.Expr(1), expr.GetOp().GetText())
 	case *parser.AddSubContext:
 		return v.validateBinaryOperation(expr.Expr(0), expr.Expr(1), expr.GetOp().GetText())
-	case *parser.CompareSymbolContext:
+	case *parser.EqualitySymbolContext:
 		return v.validateBinaryOperation(expr.Expr(0), expr.Expr(1), expr.GetOp().GetText())
+	case *parser.RelationalSymbolContext:
+		return v.validateBinaryOperation(expr.Expr(0), expr.Expr(1), expr.GetOp().GetText())
+	case *parser.OrOpContext:
+		return v.validateOrOperation(expr)
+	case *parser.AndOpContext:
+		return v.validateAndOperation(expr)
 	case *parser.CompareFuncInfixContext:
 		return v.validateCustomBinaryOp(expr)
 	case *parser.NotCompareFuncInfixContext:
@@ -328,6 +334,56 @@ func (v *PureValidator) validateBinaryOpTypes(leftCtx, rightCtx parser.IExprCont
 		v.AddError(leftCtx, "unsupported binary operator: "+op)
 		return false
 	}
+}
+
+func (v *PureValidator) validateOrOperation(ctx *parser.OrOpContext) bool {
+	leftValid := v.ValidateExpression(ctx.Expr(0))
+	rightValid := v.ValidateExpression(ctx.Expr(1))
+	
+	if !leftValid || !rightValid {
+		return false
+	}
+	
+	leftType := v.inferExpressionType(ctx.Expr(0))
+	rightType := v.inferExpressionType(ctx.Expr(1))
+	
+	// || 运算符的类型规则:
+	// 1. 相同类型: T || T -> T
+	// 2. 数值类型提升: int || float -> float, float || int -> float
+	// 3. 其他类型必须兼容
+	
+	if leftType.Equals(rightType) {
+		return true // 相同类型，直接通过
+	}
+	
+	// 检查数值类型的混合
+	if v.isNumericType(leftType) && v.isNumericType(rightType) {
+		return true // 数值类型可以混合，由IR阶段决定类型提升
+	}
+	
+	// 检查其他兼容的类型组合
+	if v.areTypesCompatibleForOr(leftType, rightType) {
+		return true
+	}
+	
+	v.AddError(ctx.Expr(1), fmt.Sprintf("|| operator requires compatible types: %s vs %s", leftType, rightType))
+	return false
+}
+
+func (v *PureValidator) validateAndOperation(ctx *parser.AndOpContext) bool {
+	leftValid := v.ValidateExpression(ctx.Expr(0))
+	rightValid := v.ValidateExpression(ctx.Expr(1))
+	
+	if !leftValid || !rightValid {
+		return false
+	}
+	
+	// && 运算符的宽泛语义：
+	// - 不要求左右操作数类型兼容
+	// - 结果类型始终是右操作数的类型
+	// - 任何类型的操作数都是有效的
+	
+	return true // && 运算符接受任何类型的操作数组合
 }
 
 func (v *PureValidator) validateCustomBinaryOp(ctx *parser.CompareFuncInfixContext) bool {
@@ -631,7 +687,34 @@ func (v *PureValidator) inferExpressionType(ctx parser.IExprContext) Type {
 			return IntType
 		}
 		return AnyType
-	case *parser.CompareSymbolContext, *parser.CompareFuncInfixContext, *parser.NotCompareFuncInfixContext:
+	case *parser.OrOpContext:
+		leftType := v.inferExpressionType(expr.Expr(0))
+		rightType := v.inferExpressionType(expr.Expr(1))
+		
+		// || 运算符的返回类型规则:
+		// 1. 相同类型: 返回该类型
+		// 2. 数值类型: 返回更宽的类型 (int || float -> float)
+		// 3. 其他: 返回左侧类型 (按照短路求值的语义)
+		
+		if leftType.Equals(rightType) {
+			return leftType
+		}
+		
+		// 数值类型提升
+		if v.isNumericType(leftType) && v.isNumericType(rightType) {
+			if v.isFloatType(leftType) || v.isFloatType(rightType) {
+				return FloatType
+			}
+			return IntType
+		}
+		
+		// 默认返回左侧类型
+		return leftType
+	case *parser.AndOpContext:
+		// && 运算符的返回类型规则:
+		// 结果类型始终是右操作数的类型
+		return v.inferExpressionType(expr.Expr(1))
+	case *parser.EqualitySymbolContext, *parser.RelationalSymbolContext, *parser.CompareFuncInfixContext, *parser.NotCompareFuncInfixContext:
 		return BooleanType
 	case *parser.FunctionCallContext:
 		funcName := expr.Func_().GetText()
@@ -709,6 +792,28 @@ func (v *PureValidator) areTypesCompatibleInDict(type1, type2 Type) bool {
 	}
 	// Allow numeric type mixing in dictionaries (let IR decide promotion)
 	return v.isNumericType(type1) && v.isNumericType(type2)
+}
+
+func (v *PureValidator) areTypesCompatibleForOr(type1, type2 Type) bool {
+	// 基本兼容性检查: 相同的类型总是兼容的
+	if type1.Equals(type2) {
+		return true
+	}
+	
+	// 数值类型混合 (已在上层检查过，这里是补充)
+	if v.isNumericType(type1) && v.isNumericType(type2) {
+		return true
+	}
+	
+	// 可以添加更多的兼容规则，比如：
+	// - string 类型与其他类型的转换
+	// - any 类型的兼容性
+	if type1.Equals(AnyType) || type2.Equals(AnyType) {
+		return true
+	}
+	
+	// 目前保守处理，只允许相同类型和数值类型混合
+	return false
 }
 
 func (v *PureValidator) isArgCountValid(funcType *FunctionType, argCount int) bool {

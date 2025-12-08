@@ -6,9 +6,12 @@ prog: stat+ EOF;
 stat: expr NEWLINE? | NEWLINE;
 
 expr:
-	expr op = ('*' | '/') expr									# MulDiv
+	expr op = ('*' | '/') expr								# MulDiv
 	| expr op = ('+' | '-') expr								# AddSub
-	| expr op = ('>' | '<' | '>=' | '<=' | '==' | '!=') expr	# CompareSymbol
+	| expr op = ('>' | '<' | '>=' | '<=') expr					# RelationalSymbol
+	| expr op = ('==' | '!=') expr								# EqualitySymbol
+	| expr op = '&&' expr										# AndOp
+	| expr op = '||' expr											# OrOp
 	| expr ('NOT' | 'not') binaryOp expr						# NotCompareFuncInfix
 	| expr binaryOp expr										# CompareFuncInfix
 	| expr '[' expr ']'											# IndexAccess

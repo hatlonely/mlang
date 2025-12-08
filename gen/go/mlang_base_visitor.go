@@ -20,6 +20,14 @@ func (v *BasemlangVisitor) VisitDictionary(ctx *DictionaryContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BasemlangVisitor) VisitOrOp(ctx *OrOpContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BasemlangVisitor) VisitRelationalSymbol(ctx *RelationalSymbolContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BasemlangVisitor) VisitMulDiv(ctx *MulDivContext) interface{} {
 	return v.VisitChildren(ctx)
 }
@@ -36,7 +44,7 @@ func (v *BasemlangVisitor) VisitIndexAccess(ctx *IndexAccessContext) interface{}
 	return v.VisitChildren(ctx)
 }
 
-func (v *BasemlangVisitor) VisitCompareSymbol(ctx *CompareSymbolContext) interface{} {
+func (v *BasemlangVisitor) VisitEqualitySymbol(ctx *EqualitySymbolContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -73,6 +81,10 @@ func (v *BasemlangVisitor) VisitBoolean(ctx *BooleanContext) interface{} {
 }
 
 func (v *BasemlangVisitor) VisitFieldAccess(ctx *FieldAccessContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BasemlangVisitor) VisitAndOp(ctx *AndOpContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

@@ -20,6 +20,10 @@ const (
 	OpGT  // >
 	OpGE  // >=
 	
+	// Logical operations
+	OpOr  // ||
+	OpAnd // &&
+	
 	// Custom binary operations (for function-like operators)
 	OpCustom
 )
@@ -46,6 +50,10 @@ func (op OpType) String() string {
 		return ">"
 	case OpGE:
 		return ">="
+	case OpOr:
+		return "||"
+	case OpAnd:
+		return "&&"
 	case OpCustom:
 		return "custom"
 	default:
@@ -86,6 +94,10 @@ func ParseOp(op string) OpType {
 		return OpGT
 	case ">=":
 		return OpGE
+	case "||":
+		return OpOr
+	case "&&":
+		return OpAnd
 	default:
 		return OpCustom
 	}

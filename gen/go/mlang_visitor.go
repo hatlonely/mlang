@@ -17,6 +17,12 @@ type mlangVisitor interface {
 	// Visit a parse tree produced by mlangParser#Dictionary.
 	VisitDictionary(ctx *DictionaryContext) interface{}
 
+	// Visit a parse tree produced by mlangParser#OrOp.
+	VisitOrOp(ctx *OrOpContext) interface{}
+
+	// Visit a parse tree produced by mlangParser#RelationalSymbol.
+	VisitRelationalSymbol(ctx *RelationalSymbolContext) interface{}
+
 	// Visit a parse tree produced by mlangParser#MulDiv.
 	VisitMulDiv(ctx *MulDivContext) interface{}
 
@@ -29,8 +35,8 @@ type mlangVisitor interface {
 	// Visit a parse tree produced by mlangParser#IndexAccess.
 	VisitIndexAccess(ctx *IndexAccessContext) interface{}
 
-	// Visit a parse tree produced by mlangParser#CompareSymbol.
-	VisitCompareSymbol(ctx *CompareSymbolContext) interface{}
+	// Visit a parse tree produced by mlangParser#EqualitySymbol.
+	VisitEqualitySymbol(ctx *EqualitySymbolContext) interface{}
 
 	// Visit a parse tree produced by mlangParser#String.
 	VisitString(ctx *StringContext) interface{}
@@ -58,6 +64,9 @@ type mlangVisitor interface {
 
 	// Visit a parse tree produced by mlangParser#FieldAccess.
 	VisitFieldAccess(ctx *FieldAccessContext) interface{}
+
+	// Visit a parse tree produced by mlangParser#AndOp.
+	VisitAndOp(ctx *AndOpContext) interface{}
 
 	// Visit a parse tree produced by mlangParser#exprList.
 	VisitExprList(ctx *ExprListContext) interface{}
