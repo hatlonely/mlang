@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	
+
 	"github.com/hatlonely/mlang/go/compiler"
 	"github.com/hatlonely/mlang/go/semantic"
 )
@@ -40,16 +40,16 @@ func main() {
 
 	// Compile
 	comp := compiler.NewCompiler()
-	
+
 	// Register some common custom functions for demo
 	registerCommonFunctions(comp)
-	
+
 	// Register some common variables for demo
 	registerCommonVariables(comp)
-	
+
 	// Register struct types and variables
 	registerStructTypes(comp)
-	
+
 	result := comp.CompileToGo(input)
 
 	// Handle errors
@@ -146,26 +146,26 @@ func writeOutput(filename, content string) error {
 func registerCommonFunctions(comp *compiler.Compiler) {
 	// Register previously built-in functions
 	comp.RegisterFunction("len", []semantic.Type{semantic.AnyType}, semantic.IntType)
-	
+
 	// Register abs function for both int and float
 	comp.RegisterFunction("abs", []semantic.Type{semantic.IntType}, semantic.IntType)
 	comp.RegisterFunction("abs", []semantic.Type{semantic.FloatType}, semantic.FloatType)
-	
+
 	// Register max function with specific type overloads
 	comp.RegisterVariadicFunction("max", []semantic.Type{}, semantic.IntType, semantic.IntType)
 	comp.RegisterVariadicFunction("max", []semantic.Type{}, semantic.FloatType, semantic.FloatType)
-	
+
 	// Register min function with specific type overloads
 	comp.RegisterVariadicFunction("min", []semantic.Type{}, semantic.IntType, semantic.IntType)
 	comp.RegisterVariadicFunction("min", []semantic.Type{}, semantic.FloatType, semantic.FloatType)
-	
+
 	// Register sum function with specific type overloads
 	comp.RegisterVariadicFunction("sum", []semantic.Type{}, semantic.IntType, semantic.IntType)
 	comp.RegisterVariadicFunction("sum", []semantic.Type{}, semantic.FloatType, semantic.FloatType)
-	
+
 	// Register concat function
 	comp.RegisterVariadicFunction("concat", []semantic.Type{}, semantic.StringType, semantic.StringType)
-	
+
 	// Register some useful mathematical functions
 	comp.RegisterFunction("sqrt", []semantic.Type{semantic.IntType}, semantic.FloatType)
 	comp.RegisterFunction("sqrt", []semantic.Type{semantic.FloatType}, semantic.FloatType)
@@ -174,53 +174,51 @@ func registerCommonFunctions(comp *compiler.Compiler) {
 	comp.RegisterFunction("pow", []semantic.Type{semantic.IntType, semantic.FloatType}, semantic.FloatType)
 	comp.RegisterFunction("pow", []semantic.Type{semantic.FloatType, semantic.IntType}, semantic.FloatType)
 	comp.RegisterFunction("round", []semantic.Type{semantic.FloatType}, semantic.IntType)
-	
+
 	// Register string functions
 	comp.RegisterBinaryOp("contains", semantic.StringType, semantic.StringType, semantic.BooleanType)
 	comp.RegisterBinaryOp("startsWith", semantic.StringType, semantic.StringType, semantic.BooleanType)
 	comp.RegisterBinaryOp("endsWith", semantic.StringType, semantic.StringType, semantic.BooleanType)
-	
+
 	// Register comparison operators for numbers
 	comp.RegisterBinaryOp("gt", semantic.IntType, semantic.IntType, semantic.BooleanType)
 	comp.RegisterBinaryOp("gt", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
-	comp.RegisterBinaryOp("gt", semantic.IntType, semantic.FloatType, semantic.BooleanType)
-	comp.RegisterBinaryOp("gt", semantic.FloatType, semantic.IntType, semantic.BooleanType)
-	
+
 	comp.RegisterBinaryOp("lt", semantic.IntType, semantic.IntType, semantic.BooleanType)
 	comp.RegisterBinaryOp("lt", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
 	comp.RegisterBinaryOp("lt", semantic.IntType, semantic.FloatType, semantic.BooleanType)
 	comp.RegisterBinaryOp("lt", semantic.FloatType, semantic.IntType, semantic.BooleanType)
-	
+
 	comp.RegisterBinaryOp("ge", semantic.IntType, semantic.IntType, semantic.BooleanType)
 	comp.RegisterBinaryOp("ge", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
 	comp.RegisterBinaryOp("ge", semantic.IntType, semantic.FloatType, semantic.BooleanType)
 	comp.RegisterBinaryOp("ge", semantic.FloatType, semantic.IntType, semantic.BooleanType)
-	
+
 	comp.RegisterBinaryOp("le", semantic.IntType, semantic.IntType, semantic.BooleanType)
 	comp.RegisterBinaryOp("le", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
 	comp.RegisterBinaryOp("le", semantic.IntType, semantic.FloatType, semantic.BooleanType)
 	comp.RegisterBinaryOp("le", semantic.FloatType, semantic.IntType, semantic.BooleanType)
-	
+
 	comp.RegisterBinaryOp("eq", semantic.IntType, semantic.IntType, semantic.BooleanType)
 	comp.RegisterBinaryOp("eq", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
 	comp.RegisterBinaryOp("eq", semantic.IntType, semantic.FloatType, semantic.BooleanType)
 	comp.RegisterBinaryOp("eq", semantic.FloatType, semantic.IntType, semantic.BooleanType)
 	comp.RegisterBinaryOp("eq", semantic.StringType, semantic.StringType, semantic.BooleanType)
 	comp.RegisterBinaryOp("eq", semantic.BooleanType, semantic.BooleanType, semantic.BooleanType)
-	
+
 	comp.RegisterBinaryOp("ne", semantic.IntType, semantic.IntType, semantic.BooleanType)
 	comp.RegisterBinaryOp("ne", semantic.FloatType, semantic.FloatType, semantic.BooleanType)
 	comp.RegisterBinaryOp("ne", semantic.IntType, semantic.FloatType, semantic.BooleanType)
 	comp.RegisterBinaryOp("ne", semantic.FloatType, semantic.IntType, semantic.BooleanType)
 	comp.RegisterBinaryOp("ne", semantic.StringType, semantic.StringType, semantic.BooleanType)
 	comp.RegisterBinaryOp("ne", semantic.BooleanType, semantic.BooleanType, semantic.BooleanType)
-	
+
 	// Register string comparison operators
 	comp.RegisterBinaryOp("gt", semantic.StringType, semantic.StringType, semantic.BooleanType)
 	comp.RegisterBinaryOp("lt", semantic.StringType, semantic.StringType, semantic.BooleanType)
 	comp.RegisterBinaryOp("ge", semantic.StringType, semantic.StringType, semantic.BooleanType)
 	comp.RegisterBinaryOp("le", semantic.StringType, semantic.StringType, semantic.BooleanType)
-	
+
 	// Register utility functions
 	comp.RegisterFunction("isEmpty", []semantic.Type{semantic.AnyType}, semantic.BooleanType)
 	comp.RegisterFunction("toString", []semantic.Type{semantic.AnyType}, semantic.StringType)
@@ -230,26 +228,26 @@ func registerCommonVariables(comp *compiler.Compiler) {
 	// Register mathematical constants
 	comp.RegisterVariable("pi", semantic.FloatType)
 	comp.RegisterVariable("e", semantic.FloatType)
-	
+
 	// Register system variables
 	comp.RegisterVariable("version", semantic.StringType)
 	comp.RegisterVariable("debug", semantic.BooleanType)
-	
+
 	// Register configuration variables
 	comp.RegisterVariable("maxRetries", semantic.IntType)
 	comp.RegisterVariable("timeout", semantic.FloatType)
 	comp.RegisterVariable("apiKey", semantic.StringType)
-	
+
 	// Register user variables
 	comp.RegisterVariable("userAge", semantic.IntType)
 	comp.RegisterVariable("userName", semantic.StringType)
 	comp.RegisterVariable("isActive", semantic.BooleanType)
-	
+
 	// Register array variables
 	comp.RegisterVariable("numbers", &semantic.ArrayType{ElementType: semantic.IntType})
 	comp.RegisterVariable("names", &semantic.ArrayType{ElementType: semantic.StringType})
 	comp.RegisterVariable("scores", &semantic.ArrayType{ElementType: semantic.FloatType})
-	
+
 	// Register map variables
 	comp.RegisterVariable("configs", &semantic.DictType{KeyType: semantic.StringType, ValueType: semantic.StringType})
 	comp.RegisterVariable("lookup", &semantic.DictType{KeyType: semantic.StringType, ValueType: semantic.IntType})
@@ -264,18 +262,18 @@ func registerStructTypes(comp *compiler.Compiler) {
 		"age":  semantic.IntType,
 	}
 	comp.RegisterStructType("User", userFields)
-	
+
 	// Register Point struct type
 	pointFields := map[string]semantic.Type{
 		"x": semantic.FloatType,
 		"y": semantic.FloatType,
 	}
 	comp.RegisterStructType("Point", pointFields)
-	
+
 	// Register some struct variables for demo
 	comp.RegisterStructVariable("user", "User")
 	comp.RegisterStructVariable("point", "Point")
-	
+
 	// Register array of structs
 	userStructType := &semantic.StructType{
 		Name: "User",
