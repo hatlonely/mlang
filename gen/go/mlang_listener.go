@@ -41,6 +41,9 @@ type mlangListener interface {
 	// EnterArray is called when entering the Array production.
 	EnterArray(c *ArrayContext)
 
+	// EnterNotCompareFuncInfix is called when entering the NotCompareFuncInfix production.
+	EnterNotCompareFuncInfix(c *NotCompareFuncInfixContext)
+
 	// EnterNumber is called when entering the Number production.
 	EnterNumber(c *NumberContext)
 
@@ -106,6 +109,9 @@ type mlangListener interface {
 
 	// ExitArray is called when exiting the Array production.
 	ExitArray(c *ArrayContext)
+
+	// ExitNotCompareFuncInfix is called when exiting the NotCompareFuncInfix production.
+	ExitNotCompareFuncInfix(c *NotCompareFuncInfixContext)
 
 	// ExitNumber is called when exiting the Number production.
 	ExitNumber(c *NumberContext)

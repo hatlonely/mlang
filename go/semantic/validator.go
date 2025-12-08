@@ -129,6 +129,8 @@ func (v *PureValidator) ValidateExpression(ctx parser.IExprContext) bool {
 		return v.validateBinaryOperation(expr.Expr(0), expr.Expr(1), expr.GetOp().GetText())
 	case *parser.CompareFuncInfixContext:
 		return v.validateCustomBinaryOp(expr)
+	case *parser.NotCompareFuncInfixContext:
+		return v.validateNotCustomBinaryOp(expr)
 	case *parser.FunctionCallContext:
 		return v.validateFunctionCall(expr)
 	case *parser.FieldAccessContext:
@@ -357,6 +359,42 @@ func (v *PureValidator) validateCustomBinaryOp(ctx *parser.CompareFuncInfixConte
 	
 	// Store the resolved type for code generation
 	_ = binaryOpType // Use the resolved binary operator type
+	
+	return true
+}
+
+func (v *PureValidator) validateNotCustomBinaryOp(ctx *parser.NotCompareFuncInfixContext) bool {
+	funcName := ctx.BinaryOp().GetText()
+	
+	leftValid := v.ValidateExpression(ctx.Expr(0))
+	rightValid := v.ValidateExpression(ctx.Expr(1))
+	
+	if !leftValid || !rightValid {
+		return false
+	}
+	
+	// Get argument types
+	leftType := v.inferExpressionType(ctx.Expr(0))
+	rightType := v.inferExpressionType(ctx.Expr(1))
+	
+	// Try to resolve binary operator overload
+	symbol, err := v.symbolTable.ResolveBinaryOpOverload(funcName, leftType, rightType)
+	if err != nil {
+		v.AddError(ctx, fmt.Sprintf("cannot resolve binary operator %s for types (%s, %s): %v", funcName, leftType, rightType, err))
+		return false
+	}
+	
+	binaryOpType, ok := symbol.Type.(*BinaryOpType)
+	if !ok {
+		v.AddError(ctx, funcName+" is not a binary operator")
+		return false
+	}
+	
+	// Check that the binary operator returns boolean type (required for NOT)
+	if binaryOpType.ReturnType != BooleanType {
+		v.AddError(ctx, fmt.Sprintf("NOT operator can only be applied to binary operators that return boolean, but %s returns %s", funcName, binaryOpType.ReturnType))
+		return false
+	}
 	
 	return true
 }
@@ -593,7 +631,7 @@ func (v *PureValidator) inferExpressionType(ctx parser.IExprContext) Type {
 			return IntType
 		}
 		return AnyType
-	case *parser.CompareSymbolContext, *parser.CompareFuncInfixContext:
+	case *parser.CompareSymbolContext, *parser.CompareFuncInfixContext, *parser.NotCompareFuncInfixContext:
 		return BooleanType
 	case *parser.FunctionCallContext:
 		funcName := expr.Func_().GetText()

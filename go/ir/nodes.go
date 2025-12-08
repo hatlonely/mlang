@@ -95,14 +95,24 @@ type BinaryOp struct {
 	Left       IRExpr
 	Right      IRExpr
 	Op         OpType
+	OpName     string        // for custom operations, stores the operation name
 	ResultType semantic.Type
 	LeftCast   semantic.Type // nil if no cast needed
 	RightCast  semantic.Type // nil if no cast needed
+	Negated    bool          // true if this operation is negated (NOT)
 }
 
 func (b *BinaryOp) Type() semantic.Type { return b.ResultType }
 func (b *BinaryOp) String() string {
-	return fmt.Sprintf("binop(%s %s %s:%s)", b.Left, b.Op, b.Right, b.ResultType)
+	prefix := ""
+	if b.Negated {
+		prefix = "NOT "
+	}
+	opStr := b.Op.String()
+	if b.Op == OpCustom && b.OpName != "" {
+		opStr = b.OpName
+	}
+	return fmt.Sprintf("binop(%s%s %s %s:%s)", prefix, b.Left, opStr, b.Right, b.ResultType)
 }
 func (b *BinaryOp) isExpr() {}
 

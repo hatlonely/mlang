@@ -97,30 +97,44 @@ func (g *GoGenerator) generateBinaryOp(op *ir.BinaryOp) (string, error) {
 	}
 	
 	// Generate the operation
+	var result string
 	switch op.Op {
 	case ir.OpAdd:
-		return fmt.Sprintf("(%s + %s)", left, right), nil
+		result = fmt.Sprintf("(%s + %s)", left, right)
 	case ir.OpSub:
-		return fmt.Sprintf("(%s - %s)", left, right), nil
+		result = fmt.Sprintf("(%s - %s)", left, right)
 	case ir.OpMul:
-		return fmt.Sprintf("(%s * %s)", left, right), nil
+		result = fmt.Sprintf("(%s * %s)", left, right)
 	case ir.OpDiv:
-		return fmt.Sprintf("(%s / %s)", left, right), nil
+		result = fmt.Sprintf("(%s / %s)", left, right)
 	case ir.OpEQ:
-		return fmt.Sprintf("(%s == %s)", left, right), nil
+		result = fmt.Sprintf("(%s == %s)", left, right)
 	case ir.OpNE:
-		return fmt.Sprintf("(%s != %s)", left, right), nil
+		result = fmt.Sprintf("(%s != %s)", left, right)
 	case ir.OpLT:
-		return fmt.Sprintf("(%s < %s)", left, right), nil
+		result = fmt.Sprintf("(%s < %s)", left, right)
 	case ir.OpLE:
-		return fmt.Sprintf("(%s <= %s)", left, right), nil
+		result = fmt.Sprintf("(%s <= %s)", left, right)
 	case ir.OpGT:
-		return fmt.Sprintf("(%s > %s)", left, right), nil
+		result = fmt.Sprintf("(%s > %s)", left, right)
 	case ir.OpGE:
-		return fmt.Sprintf("(%s >= %s)", left, right), nil
+		result = fmt.Sprintf("(%s >= %s)", left, right)
+	case ir.OpCustom:
+		// Custom binary operators are generated as function calls
+		if op.OpName == "" {
+			return "", fmt.Errorf("custom binary operator missing OpName")
+		}
+		result = fmt.Sprintf("%s(%s, %s)", op.OpName, left, right)
 	default:
 		return "", fmt.Errorf("unsupported binary operator: %s", op.Op)
 	}
+	
+	// Apply NOT if negated
+	if op.Negated {
+		result = fmt.Sprintf("!(%s)", result)
+	}
+	
+	return result, nil
 }
 
 func (g *GoGenerator) generateFunctionCall(call *ir.FunctionCall) (string, error) {

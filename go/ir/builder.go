@@ -68,6 +68,8 @@ func (b *Builder) BuildExpression(ctx parser.IExprContext) IRExpr {
 		return b.buildBinaryOp(expr.Expr(0), expr.Expr(1), expr.GetOp().GetText())
 	case *parser.CompareFuncInfixContext:
 		return b.buildCustomBinaryOp(expr)
+	case *parser.NotCompareFuncInfixContext:
+		return b.buildNotCustomBinaryOp(expr)
 	case *parser.FunctionCallContext:
 		return b.buildFunctionCall(expr)
 	case *parser.FieldAccessContext:
@@ -332,6 +334,62 @@ func (b *Builder) buildCustomBinaryOp(ctx *parser.CompareFuncInfixContext) IRExp
 		ArgCasts:   []semantic.Type{nil, nil}, // No casting
 		IsBuiltin:  false,
 		IsVariadic: false,
+	}
+}
+
+func (b *Builder) buildNotCustomBinaryOp(ctx *parser.NotCompareFuncInfixContext) IRExpr {
+	funcName := ctx.BinaryOp().GetText()
+	left := b.BuildExpression(ctx.Expr(0))
+	right := b.BuildExpression(ctx.Expr(1))
+	
+	// Try to resolve binary operator overload
+	symbol, err := b.symbolTable.ResolveBinaryOpOverload(funcName, left.Type(), right.Type())
+	if err != nil {
+		b.addError(ctx, fmt.Sprintf("cannot resolve binary operator %s for types (%s, %s): %v", funcName, left.Type(), right.Type(), err))
+		return &BinaryOp{
+			Left:       left,
+			Right:      right,
+			Op:         OpCustom,
+			OpName:     funcName,
+			ResultType: semantic.BooleanType,
+			Negated:    true,
+		}
+	}
+	
+	binaryOpType, ok := symbol.Type.(*semantic.BinaryOpType)
+	if !ok {
+		b.addError(ctx, funcName+" is not a binary operator")
+		return &BinaryOp{
+			Left:       left,
+			Right:      right,
+			Op:         OpCustom,
+			OpName:     funcName,
+			ResultType: semantic.BooleanType,
+			Negated:    true,
+		}
+	}
+	
+	// Check that the binary operator returns boolean type (required for NOT)
+	if binaryOpType.ReturnType != semantic.BooleanType {
+		b.addError(ctx, fmt.Sprintf("NOT operator can only be applied to binary operators that return boolean, but %s returns %s", funcName, binaryOpType.ReturnType))
+		return &BinaryOp{
+			Left:       left,
+			Right:      right,
+			Op:         OpCustom,
+			OpName:     funcName,
+			ResultType: semantic.BooleanType,
+			Negated:    true,
+		}
+	}
+	
+	// Create a BinaryOp node with Negated=true to represent "NOT binaryOp"
+	return &BinaryOp{
+		Left:       left,
+		Right:      right,
+		Op:         OpCustom,
+		OpName:     funcName,
+		ResultType: semantic.BooleanType, // NOT always returns boolean
+		Negated:    true,
 	}
 }
 

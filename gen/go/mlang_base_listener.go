@@ -87,6 +87,12 @@ func (s *BasemlangListener) EnterArray(ctx *ArrayContext) {}
 // ExitArray is called when production Array is exited.
 func (s *BasemlangListener) ExitArray(ctx *ArrayContext) {}
 
+// EnterNotCompareFuncInfix is called when production NotCompareFuncInfix is entered.
+func (s *BasemlangListener) EnterNotCompareFuncInfix(ctx *NotCompareFuncInfixContext) {}
+
+// ExitNotCompareFuncInfix is called when production NotCompareFuncInfix is exited.
+func (s *BasemlangListener) ExitNotCompareFuncInfix(ctx *NotCompareFuncInfixContext) {}
+
 // EnterNumber is called when production Number is entered.
 func (s *BasemlangListener) EnterNumber(ctx *NumberContext) {}
 

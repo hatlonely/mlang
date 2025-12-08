@@ -9,6 +9,7 @@ expr:
 	expr op = ('*' | '/') expr									# MulDiv
 	| expr op = ('+' | '-') expr								# AddSub
 	| expr op = ('>' | '<' | '>=' | '<=' | '==' | '!=') expr	# CompareSymbol
+	| expr ('NOT' | 'not') binaryOp expr						# NotCompareFuncInfix
 	| expr binaryOp expr										# CompareFuncInfix
 	| expr '[' expr ']'											# IndexAccess
 	| expr DOT ID												# FieldAccess
