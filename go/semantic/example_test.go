@@ -184,14 +184,9 @@ func analyzeCodeWithValidator(input string, validator *semantic.PureValidator) (
 		return validator.GetErrors(), semantic.VoidType
 	}
 
-	// Get result type from last statement
+	// Get result type from the single expression
 	progCtx := tree.(*parser.ProgContext)
-	var lastType semantic.Type = semantic.VoidType
-	for _, statCtx := range progCtx.AllStat() {
-		if exprCtx := statCtx.Expr(); exprCtx != nil {
-			lastType = validator.InferType(exprCtx)
-		}
-	}
+	lastType := validator.InferType(progCtx.Expr())
 
 	return validator.GetErrors(), lastType
 }
