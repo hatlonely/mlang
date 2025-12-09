@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"fmt"
+	"strings"
 	
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/hatlonely/mlang/go/codegen"
@@ -51,7 +52,8 @@ func (c *Compiler) CompileToGo(input string) *CompileResult {
 	
 	if !valid {
 		for _, err := range c.validator.GetErrors() {
-			result.Errors = append(result.Errors, err.Error())
+			formattedError := c.formatError(err, input)
+			result.Errors = append(result.Errors, formattedError)
 		}
 		return result
 	}
@@ -150,4 +152,30 @@ func CompileExample() {
 		
 		fmt.Println()
 	}
+}
+
+// formatError formats a semantic error with source code and position highlighting
+func (c *Compiler) formatError(err *semantic.SemanticError, sourceCode string) string {
+	// 构建错误信息格式
+	result := fmt.Sprintf("semantic error at line %d, column %d: %s\n", err.Line, err.Column, err.Message)
+	
+	// 分割源代码为行
+	lines := strings.Split(sourceCode, "\n")
+	if err.Line > 0 && err.Line <= len(lines) {
+		sourceLine := lines[err.Line-1]
+		result += fmt.Sprintf("  %s\n", sourceLine)
+		
+		// 添加指示箭头
+		if err.Column >= 0 {
+			spaces := strings.Repeat(" ", err.Column+2) // +2 for the "  " indent
+			length := err.Length
+			if length <= 0 {
+				length = 1 // 默认长度
+			}
+			arrows := strings.Repeat("^", length)
+			result += fmt.Sprintf("%s%s", spaces, arrows)
+		}
+	}
+	
+	return result
 }

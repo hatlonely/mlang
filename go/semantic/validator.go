@@ -13,6 +13,7 @@ type SemanticError struct {
 	Line    int
 	Column  int
 	Message string
+	Length  int // 错误token的长度
 }
 
 func (e *SemanticError) Error() string {
@@ -33,6 +34,7 @@ func NewPureValidator() *PureValidator {
 	}
 }
 
+
 // GetSymbolTable returns the symbol table
 func (v *PureValidator) GetSymbolTable() *SymbolTable {
 	return v.symbolTable
@@ -42,10 +44,21 @@ func (v *PureValidator) GetSymbolTable() *SymbolTable {
 func (v *PureValidator) AddError(ctx antlr.ParserRuleContext, message string) {
 	line := ctx.GetStart().GetLine()
 	column := ctx.GetStart().GetColumn()
+	
+	// 计算错误token的长度
+	length := 1 // 默认长度
+	if ctx.GetStop() != nil {
+		stopColumn := ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
+		length = stopColumn - column
+	} else if ctx.GetStart() != nil {
+		length = len(ctx.GetStart().GetText())
+	}
+	
 	v.errors = append(v.errors, &SemanticError{
 		Line:    line,
 		Column:  column,
 		Message: message,
+		Length:  length,
 	})
 }
 
