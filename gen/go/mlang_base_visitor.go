@@ -12,10 +12,6 @@ func (v *BasemlangVisitor) VisitProg(ctx *ProgContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BasemlangVisitor) VisitStat(ctx *StatContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
 func (v *BasemlangVisitor) VisitDictionary(ctx *DictionaryContext) interface{} {
 	return v.VisitChildren(ctx)
 }

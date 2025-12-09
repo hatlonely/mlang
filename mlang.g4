@@ -1,9 +1,7 @@
 grammar mlang;
 
 // 解析规则
-prog: stat+ EOF;
-
-stat: expr NEWLINE? | NEWLINE;
+prog: expr EOF;
 
 expr:
 	expr '[' expr ']'											# IndexAccess

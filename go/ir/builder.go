@@ -26,20 +26,12 @@ func NewBuilder(symbolTable *semantic.SymbolTable) *Builder {
 
 // BuildProgram converts program AST to IR
 func (b *Builder) BuildProgram(ctx *parser.ProgContext) *Program {
-	var statements []IRStmt
-	var lastType semantic.Type = semantic.VoidType
-
-	for _, statCtx := range ctx.AllStat() {
-		if exprCtx := statCtx.Expr(); exprCtx != nil {
-			expr := b.BuildExpression(exprCtx)
-			statements = append(statements, &ExprStmt{Expr: expr})
-			lastType = expr.Type()
-		}
-	}
+	expr := b.BuildExpression(ctx.Expr())
+	statements := []IRStmt{&ExprStmt{Expr: expr}}
 
 	return &Program{
 		Statements: statements,
-		ResultType: lastType,
+		ResultType: expr.Type(),
 	}
 }
 

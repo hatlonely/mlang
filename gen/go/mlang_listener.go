@@ -11,9 +11,6 @@ type mlangListener interface {
 	// EnterProg is called when entering the prog production.
 	EnterProg(c *ProgContext)
 
-	// EnterStat is called when entering the stat production.
-	EnterStat(c *StatContext)
-
 	// EnterDictionary is called when entering the Dictionary production.
 	EnterDictionary(c *DictionaryContext)
 
@@ -88,9 +85,6 @@ type mlangListener interface {
 
 	// ExitProg is called when exiting the prog production.
 	ExitProg(c *ProgContext)
-
-	// ExitStat is called when exiting the stat production.
-	ExitStat(c *StatContext)
 
 	// ExitDictionary is called when exiting the Dictionary production.
 	ExitDictionary(c *DictionaryContext)

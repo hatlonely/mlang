@@ -104,17 +104,7 @@ func (v *PureValidator) RegisterVariable(name string, varType Type) error {
 
 // ValidateProgram validates the entire program
 func (v *PureValidator) ValidateProgram(ctx *parser.ProgContext) bool {
-	valid := true
-	
-	for _, statCtx := range ctx.AllStat() {
-		if exprCtx := statCtx.Expr(); exprCtx != nil {
-			if !v.ValidateExpression(exprCtx) {
-				valid = false
-			}
-		}
-	}
-	
-	return valid
+	return v.ValidateExpression(ctx.Expr())
 }
 
 // ValidateExpression validates an expression and returns true if valid
