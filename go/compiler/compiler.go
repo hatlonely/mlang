@@ -11,6 +11,76 @@ import (
 	parser "github.com/hatlonely/mlang/gen/go"
 )
 
+// SyntaxError represents a syntax error with position information
+type SyntaxError struct {
+	Line    int
+	Column  int
+	Message string
+	Length  int
+}
+
+// CustomErrorListener handles syntax errors with better formatting
+type CustomErrorListener struct {
+	*antlr.DefaultErrorListener
+	errors     []SyntaxError
+	sourceCode string
+}
+
+func NewCustomErrorListener(sourceCode string) *CustomErrorListener {
+	return &CustomErrorListener{
+		DefaultErrorListener: antlr.NewDefaultErrorListener(),
+		errors:               make([]SyntaxError, 0),
+		sourceCode:           sourceCode,
+	}
+}
+
+func (c *CustomErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
+	// 计算错误token的长度
+	length := 1
+	if token, ok := offendingSymbol.(antlr.Token); ok && token != nil {
+		text := token.GetText()
+		if text != "" {
+			length = len(text)
+		}
+	}
+	
+	c.errors = append(c.errors, SyntaxError{
+		Line:    line,
+		Column:  column,
+		Message: msg,
+		Length:  length,
+	})
+}
+
+func (c *CustomErrorListener) GetErrors() []SyntaxError {
+	return c.errors
+}
+
+func (comp *Compiler) formatSyntaxError(err SyntaxError, sourceCode string) string {
+	// 构建错误信息格式
+	result := fmt.Sprintf("syntax error at line %d, column %d: %s\n", err.Line, err.Column, err.Message)
+	
+	// 分割源代码为行
+	lines := strings.Split(sourceCode, "\n")
+	if err.Line > 0 && err.Line <= len(lines) {
+		sourceLine := lines[err.Line-1]
+		result += fmt.Sprintf("  %s\n", sourceLine)
+		
+		// 添加指示箭头
+		if err.Column >= 0 {
+			spaces := strings.Repeat(" ", err.Column+2) // +2 for the "  " indent
+			length := err.Length
+			if length <= 0 {
+				length = 1 // 默认长度
+			}
+			arrows := strings.Repeat("^", length)
+			result += fmt.Sprintf("%s%s", spaces, arrows)
+		}
+	}
+	
+	return result
+}
+
 // CompileResult contains the result of compilation
 type CompileResult struct {
 	GoCode     string        // Go expression
@@ -38,13 +108,29 @@ func (c *Compiler) CompileToGo(input string) *CompileResult {
 		Warnings: make([]string, 0),
 	}
 	
-	// Step 1: Parse the input
+	// Step 1: Parse the input with custom error handling
 	lexer := parser.NewmlangLexer(antlr.NewInputStream(input))
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := parser.NewmlangParser(stream)
 	
+	// 添加自定义错误监听器
+	errorListener := NewCustomErrorListener(input)
+	lexer.RemoveErrorListeners() // 移除词法器默认错误监听器
+	lexer.AddErrorListener(errorListener)
+	p.RemoveErrorListeners() // 移除解析器默认错误监听器
+	p.AddErrorListener(errorListener)
+	
 	// Parse the program
 	tree := p.Prog()
+	
+	// 检查语法错误
+	if len(errorListener.GetErrors()) > 0 {
+		for _, err := range errorListener.GetErrors() {
+			formattedError := c.formatSyntaxError(err, input)
+			result.Errors = append(result.Errors, formattedError)
+		}
+		return result
+	}
 	
 	// Step 2: Semantic validation
 	c.validator.ClearErrors()
