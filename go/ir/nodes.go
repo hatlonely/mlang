@@ -174,6 +174,57 @@ func (e *ExprStmt) Type() semantic.Type { return e.Expr.Type() }
 func (e *ExprStmt) String() string      { return fmt.Sprintf("expr_stmt(%s)", e.Expr) }
 func (e *ExprStmt) isStmt()             {}
 
+// Assignment statement
+type AssignmentStmt struct {
+	Lvalue     IRLvalue
+	Value      IRExpr
+	ValueType  semantic.Type
+	ValueCast  semantic.Type // nil if no cast needed
+}
+
+func (a *AssignmentStmt) Type() semantic.Type { return a.ValueType }
+func (a *AssignmentStmt) String() string      { return fmt.Sprintf("assign(%s = %s:%s)", a.Lvalue, a.Value, a.ValueType) }
+func (a *AssignmentStmt) isStmt()             {}
+
+// IRLvalue represents a left-value that can be assigned to
+type IRLvalue interface {
+	IRNode
+	isLvalue()
+}
+
+// Simple variable lvalue
+type VariableLvalue struct {
+	Name      string
+	ValueType semantic.Type
+}
+
+func (v *VariableLvalue) Type() semantic.Type { return v.ValueType }
+func (v *VariableLvalue) String() string      { return fmt.Sprintf("lvar(%s:%s)", v.Name, v.ValueType) }
+func (v *VariableLvalue) isLvalue()           {}
+
+// Index lvalue (array[index] or dict[key])
+type IndexLvalue struct {
+	Object     IRLvalue
+	Index      IRExpr
+	ResultType semantic.Type
+	IndexCast  semantic.Type // nil if no cast needed
+}
+
+func (i *IndexLvalue) Type() semantic.Type { return i.ResultType }
+func (i *IndexLvalue) String() string      { return fmt.Sprintf("lindex(%s[%s]:%s)", i.Object, i.Index, i.ResultType) }
+func (i *IndexLvalue) isLvalue()           {}
+
+// Field lvalue (struct.field)
+type FieldLvalue struct {
+	Object    IRLvalue
+	FieldName string
+	FieldType semantic.Type
+}
+
+func (f *FieldLvalue) Type() semantic.Type { return f.FieldType }
+func (f *FieldLvalue) String() string      { return fmt.Sprintf("lfield(%s.%s:%s)", f.Object, f.FieldName, f.FieldType) }
+func (f *FieldLvalue) isLvalue()           {}
+
 // Program represents the entire program
 type Program struct {
 	Statements []IRStmt

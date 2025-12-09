@@ -1,7 +1,16 @@
 grammar mlang;
 
 // 解析规则
-prog: expr EOF;
+prog: stat EOF | expr EOF;
+
+// 赋值语句
+stat: lvalue '=' expr;
+
+// 左值表达式
+lvalue:
+	ID														# SimpleLvalue
+	| lvalue '[' expr ']'									# IndexLvalue
+	| lvalue DOT ID											# FieldLvalue;
 
 expr:
 	expr '[' expr ']'											# IndexAccess

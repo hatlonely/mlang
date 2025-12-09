@@ -27,6 +27,30 @@ func (s *BasemlangListener) EnterProg(ctx *ProgContext) {}
 // ExitProg is called when production prog is exited.
 func (s *BasemlangListener) ExitProg(ctx *ProgContext) {}
 
+// EnterStat is called when production stat is entered.
+func (s *BasemlangListener) EnterStat(ctx *StatContext) {}
+
+// ExitStat is called when production stat is exited.
+func (s *BasemlangListener) ExitStat(ctx *StatContext) {}
+
+// EnterIndexLvalue is called when production IndexLvalue is entered.
+func (s *BasemlangListener) EnterIndexLvalue(ctx *IndexLvalueContext) {}
+
+// ExitIndexLvalue is called when production IndexLvalue is exited.
+func (s *BasemlangListener) ExitIndexLvalue(ctx *IndexLvalueContext) {}
+
+// EnterSimpleLvalue is called when production SimpleLvalue is entered.
+func (s *BasemlangListener) EnterSimpleLvalue(ctx *SimpleLvalueContext) {}
+
+// ExitSimpleLvalue is called when production SimpleLvalue is exited.
+func (s *BasemlangListener) ExitSimpleLvalue(ctx *SimpleLvalueContext) {}
+
+// EnterFieldLvalue is called when production FieldLvalue is entered.
+func (s *BasemlangListener) EnterFieldLvalue(ctx *FieldLvalueContext) {}
+
+// ExitFieldLvalue is called when production FieldLvalue is exited.
+func (s *BasemlangListener) ExitFieldLvalue(ctx *FieldLvalueContext) {}
+
 // EnterDictionary is called when production Dictionary is entered.
 func (s *BasemlangListener) EnterDictionary(ctx *DictionaryContext) {}
 

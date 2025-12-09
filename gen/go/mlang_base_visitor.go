@@ -12,6 +12,22 @@ func (v *BasemlangVisitor) VisitProg(ctx *ProgContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BasemlangVisitor) VisitStat(ctx *StatContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BasemlangVisitor) VisitIndexLvalue(ctx *IndexLvalueContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BasemlangVisitor) VisitSimpleLvalue(ctx *SimpleLvalueContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BasemlangVisitor) VisitFieldLvalue(ctx *FieldLvalueContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BasemlangVisitor) VisitDictionary(ctx *DictionaryContext) interface{} {
 	return v.VisitChildren(ctx)
 }

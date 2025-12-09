@@ -11,6 +11,18 @@ type mlangListener interface {
 	// EnterProg is called when entering the prog production.
 	EnterProg(c *ProgContext)
 
+	// EnterStat is called when entering the stat production.
+	EnterStat(c *StatContext)
+
+	// EnterIndexLvalue is called when entering the IndexLvalue production.
+	EnterIndexLvalue(c *IndexLvalueContext)
+
+	// EnterSimpleLvalue is called when entering the SimpleLvalue production.
+	EnterSimpleLvalue(c *SimpleLvalueContext)
+
+	// EnterFieldLvalue is called when entering the FieldLvalue production.
+	EnterFieldLvalue(c *FieldLvalueContext)
+
 	// EnterDictionary is called when entering the Dictionary production.
 	EnterDictionary(c *DictionaryContext)
 
@@ -85,6 +97,18 @@ type mlangListener interface {
 
 	// ExitProg is called when exiting the prog production.
 	ExitProg(c *ProgContext)
+
+	// ExitStat is called when exiting the stat production.
+	ExitStat(c *StatContext)
+
+	// ExitIndexLvalue is called when exiting the IndexLvalue production.
+	ExitIndexLvalue(c *IndexLvalueContext)
+
+	// ExitSimpleLvalue is called when exiting the SimpleLvalue production.
+	ExitSimpleLvalue(c *SimpleLvalueContext)
+
+	// ExitFieldLvalue is called when exiting the FieldLvalue production.
+	ExitFieldLvalue(c *FieldLvalueContext)
 
 	// ExitDictionary is called when exiting the Dictionary production.
 	ExitDictionary(c *DictionaryContext)

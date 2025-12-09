@@ -11,6 +11,18 @@ type mlangVisitor interface {
 	// Visit a parse tree produced by mlangParser#prog.
 	VisitProg(ctx *ProgContext) interface{}
 
+	// Visit a parse tree produced by mlangParser#stat.
+	VisitStat(ctx *StatContext) interface{}
+
+	// Visit a parse tree produced by mlangParser#IndexLvalue.
+	VisitIndexLvalue(ctx *IndexLvalueContext) interface{}
+
+	// Visit a parse tree produced by mlangParser#SimpleLvalue.
+	VisitSimpleLvalue(ctx *SimpleLvalueContext) interface{}
+
+	// Visit a parse tree produced by mlangParser#FieldLvalue.
+	VisitFieldLvalue(ctx *FieldLvalueContext) interface{}
+
 	// Visit a parse tree produced by mlangParser#Dictionary.
 	VisitDictionary(ctx *DictionaryContext) interface{}
 

@@ -104,7 +104,141 @@ func (v *PureValidator) RegisterVariable(name string, varType Type) error {
 
 // ValidateProgram validates the entire program
 func (v *PureValidator) ValidateProgram(ctx *parser.ProgContext) bool {
-	return v.ValidateExpression(ctx.Expr())
+	// Check if it's a statement or expression
+	if ctx.Stat() != nil {
+		return v.ValidateStatement(ctx.Stat())
+	}
+	if ctx.Expr() != nil {
+		return v.ValidateExpression(ctx.Expr())
+	}
+	v.AddError(ctx, "program must contain either a statement or expression")
+	return false
+}
+
+// ValidateStatement validates a statement and returns true if valid
+func (v *PureValidator) ValidateStatement(ctx parser.IStatContext) bool {
+	// Currently only assignment statements are supported
+	return v.ValidateAssignment(ctx)
+}
+
+// ValidateAssignment validates an assignment statement
+func (v *PureValidator) ValidateAssignment(ctx parser.IStatContext) bool {
+	// Get the lvalue and expression from the assignment
+	lvalueType, lvalueValid := v.ValidateLvalue(ctx.Lvalue())
+	exprValid := v.ValidateExpression(ctx.Expr())
+	
+	if !lvalueValid || !exprValid {
+		return false
+	}
+	
+	// Check type compatibility
+	exprType := v.inferExpressionType(ctx.Expr())
+	if !v.isAssignmentCompatible(exprType, lvalueType) {
+		v.AddError(ctx.Expr(), fmt.Sprintf("cannot assign %s to %s", exprType, lvalueType))
+		return false
+	}
+	
+	return true
+}
+
+// ValidateLvalue validates a left-value expression and returns its type
+func (v *PureValidator) ValidateLvalue(ctx parser.ILvalueContext) (Type, bool) {
+	switch lvalue := ctx.(type) {
+	case *parser.SimpleLvalueContext:
+		return v.validateSimpleLvalue(lvalue)
+	case *parser.IndexLvalueContext:
+		return v.validateIndexLvalue(lvalue)
+	case *parser.FieldLvalueContext:
+		return v.validateFieldLvalue(lvalue)
+	default:
+		v.AddError(ctx, fmt.Sprintf("unsupported lvalue type: %T", lvalue))
+		return nil, false
+	}
+}
+
+// validateSimpleLvalue validates a simple identifier lvalue (e.g., x = 5)
+func (v *PureValidator) validateSimpleLvalue(ctx *parser.SimpleLvalueContext) (Type, bool) {
+	name := ctx.ID().GetText()
+	symbol, exists := v.symbolTable.Lookup(name)
+	if !exists {
+		v.AddError(ctx, "undefined variable: "+name)
+		return nil, false
+	}
+	return symbol.Type, true
+}
+
+// validateIndexLvalue validates an index lvalue (e.g., arr[0] = 5, dict["key"] = "value")
+func (v *PureValidator) validateIndexLvalue(ctx *parser.IndexLvalueContext) (Type, bool) {
+	// Validate the base lvalue
+	baseType, baseValid := v.ValidateLvalue(ctx.Lvalue())
+	if !baseValid {
+		return nil, false
+	}
+	
+	// Validate the index expression
+	if !v.ValidateExpression(ctx.Expr()) {
+		return nil, false
+	}
+	
+	indexType := v.inferExpressionType(ctx.Expr())
+	
+	// Check if base type supports indexing
+	switch baseT := baseType.(type) {
+	case *ArrayType:
+		// Array indexing requires integer index
+		if !indexType.Equals(IntType) {
+			v.AddError(ctx.Expr(), fmt.Sprintf("array index must be int, got %s", indexType))
+			return nil, false
+		}
+		return baseT.ElementType, true
+	case *DictType:
+		// Dictionary indexing requires matching key type
+		if !indexType.Equals(baseT.KeyType) && !v.canImplicitlyCast(indexType, baseT.KeyType) {
+			v.AddError(ctx.Expr(), fmt.Sprintf("dictionary index type mismatch: expected %s, got %s", baseT.KeyType, indexType))
+			return nil, false
+		}
+		return baseT.ValueType, true
+	default:
+		v.AddError(ctx.Lvalue(), fmt.Sprintf("index assignment not supported on type %s", baseType))
+		return nil, false
+	}
+}
+
+// validateFieldLvalue validates a field lvalue (e.g., user.name = "Alice")
+func (v *PureValidator) validateFieldLvalue(ctx *parser.FieldLvalueContext) (Type, bool) {
+	// Validate the base lvalue
+	baseType, baseValid := v.ValidateLvalue(ctx.Lvalue())
+	if !baseValid {
+		return nil, false
+	}
+	
+	// Check if base type is a struct
+	structType, ok := baseType.(*StructType)
+	if !ok {
+		v.AddError(ctx.Lvalue(), fmt.Sprintf("field assignment on non-struct type: %s", baseType))
+		return nil, false
+	}
+	
+	// Check if field exists
+	fieldName := ctx.ID().GetText()
+	fieldType, exists := structType.GetFieldType(fieldName)
+	if !exists {
+		v.AddError(ctx, fmt.Sprintf("field '%s' does not exist in struct type '%s'", fieldName, structType.Name))
+		return nil, false
+	}
+	
+	return fieldType, true
+}
+
+// isAssignmentCompatible checks if a value of fromType can be assigned to a variable of toType
+func (v *PureValidator) isAssignmentCompatible(fromType, toType Type) bool {
+	// Exact type match
+	if fromType.Equals(toType) {
+		return true
+	}
+	
+	// Check if implicit conversion is allowed
+	return v.canImplicitlyCast(fromType, toType)
 }
 
 // ValidateExpression validates an expression and returns true if valid

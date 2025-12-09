@@ -21,7 +21,7 @@ func (g *GoGenerator) GenerateExpression(expr ir.IRExpr) (string, error) {
 	return g.generateExpression(expr)
 }
 
-// GenerateProgram generates Go expression from the last statement in a program
+// GenerateProgram generates Go code from program IR
 func (g *GoGenerator) GenerateProgram(program *ir.Program) (string, error) {
 	if len(program.Statements) == 0 {
 		return "", fmt.Errorf("empty program")
@@ -29,11 +29,87 @@ func (g *GoGenerator) GenerateProgram(program *ir.Program) (string, error) {
 	
 	// Get the last statement
 	lastStmt := program.Statements[len(program.Statements)-1]
-	if exprStmt, ok := lastStmt.(*ir.ExprStmt); ok {
-		return g.generateExpression(exprStmt.Expr)
+	
+	switch stmt := lastStmt.(type) {
+	case *ir.ExprStmt:
+		// For expression statements, return the expression
+		return g.generateExpression(stmt.Expr)
+	case *ir.AssignmentStmt:
+		// For assignment statements, generate the assignment
+		return g.generateAssignment(stmt)
+	default:
+		return "", fmt.Errorf("unsupported statement type: %T", stmt)
+	}
+}
+
+// generateAssignment generates Go code for assignment statement
+func (g *GoGenerator) generateAssignment(stmt *ir.AssignmentStmt) (string, error) {
+	// Generate left-hand side
+	lvalue, err := g.generateLvalue(stmt.Lvalue)
+	if err != nil {
+		return "", err
 	}
 	
-	return "", fmt.Errorf("last statement is not an expression")
+	// Generate right-hand side
+	value, err := g.generateExpression(stmt.Value)
+	if err != nil {
+		return "", err
+	}
+	
+	// Apply cast if needed
+	if stmt.ValueCast != nil {
+		value = g.generateCast(value, stmt.ValueCast)
+	}
+	
+	// Generate assignment
+	return fmt.Sprintf("%s = %s", lvalue, value), nil
+}
+
+// generateLvalue generates Go code for left-value expression
+func (g *GoGenerator) generateLvalue(lvalue ir.IRLvalue) (string, error) {
+	switch lval := lvalue.(type) {
+	case *ir.VariableLvalue:
+		return lval.Name, nil
+	case *ir.IndexLvalue:
+		return g.generateIndexLvalue(lval)
+	case *ir.FieldLvalue:
+		return g.generateFieldLvalue(lval)
+	default:
+		return "", fmt.Errorf("unsupported lvalue type: %T", lvalue)
+	}
+}
+
+// generateIndexLvalue generates Go code for index lvalue (array[index] or dict[key])
+func (g *GoGenerator) generateIndexLvalue(lval *ir.IndexLvalue) (string, error) {
+	// Generate object
+	object, err := g.generateLvalue(lval.Object)
+	if err != nil {
+		return "", err
+	}
+	
+	// Generate index
+	index, err := g.generateExpression(lval.Index)
+	if err != nil {
+		return "", err
+	}
+	
+	// Apply cast if needed
+	if lval.IndexCast != nil {
+		index = g.generateCast(index, lval.IndexCast)
+	}
+	
+	return fmt.Sprintf("%s[%s]", object, index), nil
+}
+
+// generateFieldLvalue generates Go code for field lvalue (struct.field)
+func (g *GoGenerator) generateFieldLvalue(lval *ir.FieldLvalue) (string, error) {
+	// Generate object
+	object, err := g.generateLvalue(lval.Object)
+	if err != nil {
+		return "", err
+	}
+	
+	return fmt.Sprintf("%s.%s", object, lval.FieldName), nil
 }
 
 func (g *GoGenerator) generateExpression(expr ir.IRExpr) (string, error) {

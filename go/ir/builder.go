@@ -26,12 +26,169 @@ func NewBuilder(symbolTable *semantic.SymbolTable) *Builder {
 
 // BuildProgram converts program AST to IR
 func (b *Builder) BuildProgram(ctx *parser.ProgContext) *Program {
-	expr := b.BuildExpression(ctx.Expr())
-	statements := []IRStmt{&ExprStmt{Expr: expr}}
+	var statements []IRStmt
+	var resultType semantic.Type
+	
+	if ctx.Stat() != nil {
+		// It's a statement
+		stmt := b.BuildStatement(ctx.Stat())
+		statements = []IRStmt{stmt}
+		resultType = stmt.Type()
+	} else if ctx.Expr() != nil {
+		// It's an expression
+		expr := b.BuildExpression(ctx.Expr())
+		statements = []IRStmt{&ExprStmt{Expr: expr}}
+		resultType = expr.Type()
+	} else {
+		b.addError(ctx, "program must contain either a statement or expression")
+		resultType = semantic.VoidType
+	}
 
 	return &Program{
 		Statements: statements,
-		ResultType: expr.Type(),
+		ResultType: resultType,
+	}
+}
+
+// BuildStatement converts statement AST to IR
+func (b *Builder) BuildStatement(ctx parser.IStatContext) IRStmt {
+	// Currently only assignment statements are supported
+	return b.buildAssignment(ctx)
+}
+
+// buildAssignment builds an assignment statement IR
+func (b *Builder) buildAssignment(ctx parser.IStatContext) IRStmt {
+	lvalue := b.BuildLvalue(ctx.Lvalue())
+	value := b.BuildExpression(ctx.Expr())
+	
+	lvalueType := lvalue.Type()
+	valueType := value.Type()
+	
+	// Determine if type conversion is needed
+	var valueCast semantic.Type
+	if !valueType.Equals(lvalueType) && b.canCastTo(valueType, lvalueType) {
+		valueCast = lvalueType
+	}
+	
+	return &AssignmentStmt{
+		Lvalue:    lvalue,
+		Value:     value,
+		ValueType: lvalueType, // Result type is the lvalue's type
+		ValueCast: valueCast,
+	}
+}
+
+// BuildLvalue converts lvalue AST to IR
+func (b *Builder) BuildLvalue(ctx parser.ILvalueContext) IRLvalue {
+	switch lvalue := ctx.(type) {
+	case *parser.SimpleLvalueContext:
+		return b.buildSimpleLvalue(lvalue)
+	case *parser.IndexLvalueContext:
+		return b.buildIndexLvalue(lvalue)
+	case *parser.FieldLvalueContext:
+		return b.buildFieldLvalue(lvalue)
+	default:
+		b.addError(ctx, fmt.Sprintf("unsupported lvalue type: %T", lvalue))
+		return &VariableLvalue{Name: "unknown", ValueType: semantic.AnyType}
+	}
+}
+
+// buildSimpleLvalue builds a simple variable lvalue
+func (b *Builder) buildSimpleLvalue(ctx *parser.SimpleLvalueContext) IRLvalue {
+	name := ctx.ID().GetText()
+	symbol, exists := b.symbolTable.Lookup(name)
+	if !exists {
+		b.addError(ctx, "undefined variable: "+name)
+		return &VariableLvalue{Name: name, ValueType: semantic.AnyType}
+	}
+	
+	return &VariableLvalue{
+		Name:      name,
+		ValueType: symbol.Type,
+	}
+}
+
+// buildIndexLvalue builds an index lvalue (array[index] or dict[key])
+func (b *Builder) buildIndexLvalue(ctx *parser.IndexLvalueContext) IRLvalue {
+	// Build the base lvalue
+	object := b.BuildLvalue(ctx.Lvalue())
+	
+	// Build the index expression
+	index := b.BuildExpression(ctx.Expr())
+	
+	objectType := object.Type()
+	indexType := index.Type()
+	
+	var resultType semantic.Type
+	var indexCast semantic.Type
+	
+	// Determine result type based on object type
+	switch objType := objectType.(type) {
+	case *semantic.ArrayType:
+		// Array indexing requires integer index
+		if !indexType.Equals(semantic.IntType) {
+			if b.canCastTo(indexType, semantic.IntType) {
+				indexCast = semantic.IntType
+			} else {
+				b.addError(ctx, fmt.Sprintf("array index must be int, got %s", indexType))
+			}
+		}
+		resultType = objType.ElementType
+		
+	case *semantic.DictType:
+		// Dictionary indexing requires matching key type
+		if !indexType.Equals(objType.KeyType) {
+			if b.canCastTo(indexType, objType.KeyType) {
+				indexCast = objType.KeyType
+			} else {
+				b.addError(ctx, fmt.Sprintf("dictionary index type mismatch: expected %s, got %s", objType.KeyType, indexType))
+			}
+		}
+		resultType = objType.ValueType
+		
+	default:
+		b.addError(ctx, fmt.Sprintf("index assignment not supported on type %s", objectType))
+		resultType = semantic.AnyType
+	}
+	
+	return &IndexLvalue{
+		Object:     object,
+		Index:      index,
+		ResultType: resultType,
+		IndexCast:  indexCast,
+	}
+}
+
+// buildFieldLvalue builds a field lvalue (struct.field)
+func (b *Builder) buildFieldLvalue(ctx *parser.FieldLvalueContext) IRLvalue {
+	// Build the base lvalue
+	object := b.BuildLvalue(ctx.Lvalue())
+	
+	objectType := object.Type()
+	
+	// Ensure it's a struct type
+	structType, ok := objectType.(*semantic.StructType)
+	if !ok {
+		b.addError(ctx, fmt.Sprintf("field assignment on non-struct type: %s", objectType))
+		return &FieldLvalue{
+			Object:    object,
+			FieldName: ctx.ID().GetText(),
+			FieldType: semantic.AnyType,
+		}
+	}
+	
+	// Get field information
+	fieldName := ctx.ID().GetText()
+	fieldType, exists := structType.GetFieldType(fieldName)
+	if !exists {
+		b.addError(ctx, fmt.Sprintf("field '%s' does not exist in struct type '%s'", fieldName, structType.Name))
+		fieldType = semantic.AnyType
+	}
+	
+	return &FieldLvalue{
+		Object:    object,
+		FieldName: fieldName,
+		FieldType: fieldType,
 	}
 }
 
