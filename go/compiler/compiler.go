@@ -197,6 +197,11 @@ func (c *Compiler) RegisterStructVariable(varName string, structTypeName string)
 	return c.validator.GetSymbolTable().RegisterStructVariable(varName, structTypeName)
 }
 
+// RegisterPropertyVariable registers a property variable with getter and setter
+func (c *Compiler) RegisterPropertyVariable(name string, baseType semantic.Type, getter, setter string) error {
+	return c.validator.GetSymbolTable().RegisterPropertyVariable(name, baseType, getter, setter)
+}
+
 // GetValidator returns the semantic validator (for advanced usage)
 func (c *Compiler) GetValidator() *semantic.PureValidator {
 	return c.validator

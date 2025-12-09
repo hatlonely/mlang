@@ -237,6 +237,11 @@ func (v *PureValidator) isAssignmentCompatible(fromType, toType Type) bool {
 		return true
 	}
 	
+	// Handle PropertyType: check compatibility with its base type
+	if propType, ok := toType.(*PropertyType); ok {
+		return v.isAssignmentCompatible(fromType, propType.BaseType)
+	}
+	
 	// Check if implicit conversion is allowed
 	return v.canImplicitlyCast(fromType, toType)
 }
@@ -783,6 +788,10 @@ func (v *PureValidator) inferExpressionType(ctx parser.IExprContext) Type {
 	case *parser.IdContext:
 		name := expr.GetText()
 		if symbol, exists := v.symbolTable.Lookup(name); exists {
+			// For PropertyType, return the base type for expression compatibility
+			if propType, ok := symbol.Type.(*PropertyType); ok {
+				return propType.BaseType
+			}
 			return symbol.Type
 		}
 		return AnyType
@@ -892,6 +901,11 @@ func (v *PureValidator) inferExpressionType(ctx parser.IExprContext) Type {
 }
 
 func (v *PureValidator) isNumericType(t Type) bool {
+	// Handle PropertyType
+	if propType, ok := t.(*PropertyType); ok {
+		return v.isNumericType(propType.BaseType)
+	}
+	
 	if bt, ok := t.(*BasicType); ok {
 		return bt.Name == "int" || bt.Name == "float"
 	}
@@ -899,6 +913,11 @@ func (v *PureValidator) isNumericType(t Type) bool {
 }
 
 func (v *PureValidator) isFloatType(t Type) bool {
+	// Handle PropertyType
+	if propType, ok := t.(*PropertyType); ok {
+		return v.isFloatType(propType.BaseType)
+	}
+	
 	if bt, ok := t.(*BasicType); ok {
 		return bt.Name == "float"
 	}

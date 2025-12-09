@@ -44,7 +44,26 @@ func (g *GoGenerator) GenerateProgram(program *ir.Program) (string, error) {
 
 // generateAssignment generates Go code for assignment statement
 func (g *GoGenerator) generateAssignment(stmt *ir.AssignmentStmt) (string, error) {
-	// Generate left-hand side
+	// Check if the left-hand side is a property variable
+	if varLvalue, ok := stmt.Lvalue.(*ir.VariableLvalue); ok {
+		if propType, ok := varLvalue.ValueType.(*semantic.PropertyType); ok {
+			// Generate right-hand side
+			value, err := g.generateExpression(stmt.Value)
+			if err != nil {
+				return "", err
+			}
+			
+			// Apply cast if needed
+			if stmt.ValueCast != nil {
+				value = g.generateCast(value, stmt.ValueCast)
+			}
+			
+			// For property variables, generate setter function call
+			return fmt.Sprintf("%s(ds, %s)", propType.Setter, value), nil
+		}
+	}
+	
+	// Generate left-hand side for normal variables
 	lvalue, err := g.generateLvalue(stmt.Lvalue)
 	if err != nil {
 		return "", err
@@ -112,6 +131,19 @@ func (g *GoGenerator) generateFieldLvalue(lval *ir.FieldLvalue) (string, error) 
 	return fmt.Sprintf("%s.%s", object, lval.FieldName), nil
 }
 
+// generateVariable generates code for variable access, handling PropertyType
+func (g *GoGenerator) generateVariable(v *ir.Variable) (string, error) {
+	// 检查变量类型是否是 PropertyType
+	if propType, ok := v.ValueType.(*semantic.PropertyType); ok {
+		// 对于属性变量，生成 getter 函数调用
+		// 假设数据源对象是全局变量 "ds"
+		return fmt.Sprintf("%s(ds)", propType.Getter), nil
+	}
+	
+	// 普通变量直接返回名称
+	return v.Name, nil
+}
+
 func (g *GoGenerator) generateExpression(expr ir.IRExpr) (string, error) {
 	switch e := expr.(type) {
 	case *ir.IntLiteral:
@@ -127,7 +159,7 @@ func (g *GoGenerator) generateExpression(expr ir.IRExpr) (string, error) {
 		return fmt.Sprintf("%t", e.Value), nil
 		
 	case *ir.Variable:
-		return e.Name, nil
+		return g.generateVariable(e)
 		
 	case *ir.BinaryOp:
 		return g.generateBinaryOp(e)

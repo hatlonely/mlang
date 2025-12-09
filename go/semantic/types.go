@@ -226,6 +226,43 @@ func (s *StructType) GetFieldType(fieldName string) (Type, bool) {
 	return typ, exists
 }
 
+// PropertyType represents a property with getter and setter functions
+type PropertyType struct {
+	BaseType   Type
+	Getter     string // 全局 getter 函数名，如 "getUsername"
+	Setter     string // 全局 setter 函数名，如 "setUsername"
+}
+
+func (p *PropertyType) String() string {
+	return fmt.Sprintf("property<%s>", p.BaseType.String())
+}
+
+func (p *PropertyType) Equals(other Type) bool {
+	if o, ok := other.(*PropertyType); ok {
+		return p.BaseType.Equals(o.BaseType) && 
+			   p.Getter == o.Getter && 
+			   p.Setter == o.Setter
+	}
+	return false
+}
+
+func (p *PropertyType) IsCompatibleWith(other Type) bool {
+	// PropertyType 与其基础类型兼容
+	if p.BaseType.Equals(other) {
+		return true
+	}
+	// Any type is compatible with AnyType
+	if other.Equals(AnyType) {
+		return true
+	}
+	return p.Equals(other)
+}
+
+// GetBaseType 返回属性的基础类型
+func (p *PropertyType) GetBaseType() Type {
+	return p.BaseType
+}
+
 // Predefined types
 var (
 	IntType     = &BasicType{"int"}

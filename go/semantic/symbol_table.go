@@ -429,6 +429,16 @@ func (st *SymbolTable) RegisterVariable(name string, varType Type) error {
 	return st.globalScope.Define(name, varType)
 }
 
+// RegisterPropertyVariable registers a property variable with getter and setter
+func (st *SymbolTable) RegisterPropertyVariable(name string, baseType Type, getter, setter string) error {
+	propertyType := &PropertyType{
+		BaseType: baseType,
+		Getter:   getter,
+		Setter:   setter,
+	}
+	return st.globalScope.Define(name, propertyType)
+}
+
 // RegisterStructType 注册一个结构体类型
 func (st *SymbolTable) RegisterStructType(name string, fields map[string]Type) error {
 	structType := &StructType{

@@ -102,6 +102,7 @@ func printUsage() {
 	fmt.Fprintf(os.Stderr, "  - Dictionaries: {\"key\": \"value\"}\n")
 	fmt.Fprintf(os.Stderr, "  - Functions: len([1, 2]), max(1, 2, 3)\n")
 	fmt.Fprintf(os.Stderr, "  - Variables: pi, e, userAge, userName\n")
+	fmt.Fprintf(os.Stderr, "  - Property Variables: username, userLevel, isAdmin, score\n")
 	fmt.Fprintf(os.Stderr, "  - Built-ins: abs, max, min, sum, concat\n")
 }
 
@@ -252,6 +253,12 @@ func registerCommonVariables(comp *compiler.Compiler) {
 	comp.RegisterVariable("configs", &semantic.DictType{KeyType: semantic.StringType, ValueType: semantic.StringType})
 	comp.RegisterVariable("lookup", &semantic.DictType{KeyType: semantic.StringType, ValueType: semantic.IntType})
 	comp.RegisterVariable("weights", &semantic.DictType{KeyType: semantic.IntType, ValueType: semantic.FloatType})
+
+	// Register property variables with getters and setters
+	comp.RegisterPropertyVariable("username", semantic.StringType, "getUsername", "setUsername")
+	comp.RegisterPropertyVariable("userLevel", semantic.IntType, "getUserLevel", "setUserLevel")
+	comp.RegisterPropertyVariable("isAdmin", semantic.BooleanType, "getIsAdmin", "setIsAdmin")
+	comp.RegisterPropertyVariable("score", semantic.FloatType, "getScore", "setScore")
 }
 
 func registerStructTypes(comp *compiler.Compiler) {
